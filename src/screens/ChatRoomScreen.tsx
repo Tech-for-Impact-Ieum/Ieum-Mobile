@@ -25,8 +25,13 @@ import {
   onNewMessage,
   onMessagesRead,
 } from '../services/socketClient'
-import type { Message, ChatRoom } from '../types'
+import type { Message, ChatRoom, MediaItem } from '../types'
 import type { RootStackParamList } from '../navigation/AppNavigator'
+import { ActionButtons } from '../components/ActionButtons'
+import { EmojiPickerModal } from '../components/EmojiPickerModal'
+import { QuickResponseModal } from '../components/QuickResponseModal'
+import { VoiceInputModal } from '../components/VoiceInputModal'
+import { ChatSummary } from '../components/ChatSummary'
 
 type ChatRoomRouteProp = RouteProp<RootStackParamList, 'ChatRoom'>
 type ChatRoomNavigationProp = NativeStackNavigationProp<
@@ -44,6 +49,9 @@ export default function ChatRoomScreen() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showVoiceModal, setShowVoiceModal] = useState(false)
+  const [showEmojiModal, setShowEmojiModal] = useState(false)
+  const [showQuickResponseModal, setShowQuickResponseModal] = useState(false)
   const flatListRef = useRef<FlatList>(null)
 
   // Set navigation title
@@ -169,10 +177,9 @@ export default function ChatRoomScreen() {
     initSocket()
   }, [roomId, currentUserId, chatRoom?.id])
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading || !currentUserId) return
+  const sendMessageToAPI = async (text: string, media: MediaItem[] = []) => {
+    if (!currentUserId) return
 
-    setIsLoading(true)
     try {
       const token = await Auth.getToken()
       const response = await fetch(
@@ -184,8 +191,8 @@ export default function ChatRoomScreen() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            text: inputMessage.trim(),
-            media: [],
+            text,
+            media,
           }),
         },
       )
@@ -198,14 +205,63 @@ export default function ChatRoomScreen() {
 
       if (data.ok && data.message) {
         setMessages((prev) => [...prev, data.message])
-        setInputMessage('')
       }
     } catch (error) {
       console.error('Error sending message:', error)
+    }
+  }
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading || !currentUserId) return
+
+    setIsLoading(true)
+    try {
+      await sendMessageToAPI(inputMessage.trim(), [])
+      setInputMessage('')
     } finally {
       setIsLoading(false)
     }
   }
+
+  const handleEmojiSelect = async (emoji: string) => {
+    await sendMessageToAPI(emoji, [])
+  }
+
+  const handleVoiceInputSelect = async (
+    text: string,
+    audioMedia?: MediaItem,
+  ) => {
+    const media = audioMedia ? [audioMedia] : []
+    await sendMessageToAPI(text, media)
+  }
+
+  const handleQuickResponseSelect = async (text: string) => {
+    await sendMessageToAPI(text, [])
+  }
+
+  const handleMarkMessagesAsRead = useCallback(async () => {
+    if (messages.length === 0) return
+
+    const lastMessage = messages[messages.length - 1]
+    try {
+      const token = await Auth.getToken()
+      await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/chat/rooms/${roomId}/read`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            messageId: lastMessage.id,
+          }),
+        },
+      )
+    } catch (error) {
+      console.error('Error marking messages as read:', error)
+    }
+  }, [messages, roomId])
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
@@ -256,6 +312,16 @@ export default function ChatRoomScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={90}
     >
+      {/* Chat Summary */}
+      {chatRoom && (
+        <ChatSummary
+          roomId={roomId}
+          onSummaryComplete={handleMarkMessagesAsRead}
+          autoLoad={true}
+        />
+      )}
+
+      {/* Messages List */}
       <FlatList
         ref={flatListRef}
         data={messages}
@@ -267,6 +333,14 @@ export default function ChatRoomScreen() {
         }
       />
 
+      {/* Action Buttons */}
+      <ActionButtons
+        onEmojiPress={() => setShowEmojiModal(true)}
+        onVoicePress={() => setShowVoiceModal(true)}
+        onQuickReplyPress={() => setShowQuickResponseModal(true)}
+      />
+
+      {/* Message Input */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -288,6 +362,24 @@ export default function ChatRoomScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modals */}
+      <VoiceInputModal
+        visible={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        onSend={handleVoiceInputSelect}
+      />
+      <EmojiPickerModal
+        visible={showEmojiModal}
+        onClose={() => setShowEmojiModal(false)}
+        onEmojiSelect={handleEmojiSelect}
+      />
+      <QuickResponseModal
+        visible={showQuickResponseModal}
+        onClose={() => setShowQuickResponseModal(false)}
+        roomId={roomId}
+        onSelect={handleQuickResponseSelect}
+      />
     </KeyboardAvoidingView>
   )
 }
