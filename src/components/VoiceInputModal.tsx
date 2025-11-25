@@ -15,7 +15,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native'
-import { Audio } from 'expo-av'
+import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio'
 import * as FileSystem from 'expo-file-system/legacy'
 import { Mic, X } from 'lucide-react-native'
 import { Auth } from '../services/auth'
@@ -39,9 +39,9 @@ export function VoiceInputModal({
   const [transcript, setTranscript] = useState('')
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
-  const [recording, setRecording] = useState<Audio.Recording | null>(null)
   const [audioUri, setAudioUri] = useState<string | null>(null)
-  const [sound, setSound] = useState<Audio.Sound | null>(null)
+  
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -72,9 +72,8 @@ export function VoiceInputModal({
       setIsUploading(false)
     } else {
       // Cleanup when modal closes
-      stopRecording()
-      if (sound) {
-        sound.unloadAsync()
+      if (isRecording) {
+        stopRecording()
       }
     }
   }, [visible])
@@ -88,23 +87,14 @@ export function VoiceInputModal({
   const handleStart = async () => {
     try {
       // Request permissions
-      const { status } = await Audio.requestPermissionsAsync()
+      const { status } = await requestRecordingPermissionsAsync()
       if (status !== 'granted') {
         Alert.alert('권한 필요', '음성 녹음을 위해 마이크 권한이 필요합니다.')
         return
       }
 
-      // Set audio mode
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      })
-
       // Start recording
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY,
-      )
-      setRecording(newRecording)
+      recorder.record()
       setIsRecording(true)
     } catch (err) {
       console.error('Failed to start recording:', err)
@@ -113,16 +103,14 @@ export function VoiceInputModal({
   }
 
   const stopRecording = async () => {
-    if (!recording) {
-      setIsRecording(false)
+    if (!isRecording) {
       return null
     }
 
     try {
-      await recording.stopAndUnloadAsync()
-      const uri = recording.getURI()
+      await recorder.stop()
+      const uri = recorder.uri
       setIsRecording(false)
-      setRecording(null)
       return uri
     } catch (err) {
       console.error('Failed to stop recording:', err)
@@ -185,10 +173,7 @@ export function VoiceInputModal({
     setRecordingTime(0)
     setTranscript('')
     setAudioUri(null)
-    if (sound) {
-      sound.unloadAsync()
-      setSound(null)
-    }
+    setAudioUri(null)
     handleStart()
   }
 

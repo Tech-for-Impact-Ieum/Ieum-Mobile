@@ -12,7 +12,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native'
-import { Audio } from 'expo-av'
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio'
 import { Play, Pause } from 'lucide-react-native'
 import { Auth } from '../services/auth'
 import type { ChatSummary as ChatSummaryType } from '../types'
@@ -32,19 +32,14 @@ export function ChatSummary({
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [sound, setSound] = useState<Audio.Sound | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
+  
+  // Use expo-audio hooks
+  const player = useAudioPlayer(summary?.audioUrl || '')
+  const status = useAudioPlayerStatus(player)
 
   useEffect(() => {
     if (autoLoad) {
       loadSummary()
-    }
-
-    return () => {
-      // Cleanup audio on unmount
-      if (sound) {
-        sound.unloadAsync()
-      }
     }
   }, [roomId])
 
@@ -76,6 +71,10 @@ export function ChatSummary({
       } else if (data.ok) {
         if (data.summary) {
           setSummary(data.summary)
+          // Update player source if summary loaded
+          if (data.summary.audioUrl) {
+            player.replace(data.summary.audioUrl)
+          }
         }
       }
 
@@ -115,6 +114,9 @@ export function ChatSummary({
 
       if (data.ok && data.summary) {
         setSummary(data.summary)
+        if (data.summary.audioUrl) {
+          player.replace(data.summary.audioUrl)
+        }
       }
 
       onSummaryComplete()
@@ -127,39 +129,16 @@ export function ChatSummary({
     }
   }
 
-  const toggleAudioPlayback = async () => {
+  const toggleAudioPlayback = () => {
     if (!summary?.audioUrl) return
 
-    try {
-      if (sound) {
-        const status = await sound.getStatusAsync()
-        if (status.isLoaded) {
-          if (status.isPlaying) {
-            await sound.pauseAsync()
-            setIsPlaying(false)
-          } else {
-            await sound.playAsync()
-            setIsPlaying(true)
-          }
-        }
-      } else {
-        // Load and play new sound
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: summary.audioUrl },
-          { shouldPlay: true },
-        )
-        setSound(newSound)
-        setIsPlaying(true)
-
-        // Set up playback status update
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            setIsPlaying(false)
-          }
-        })
+    if (status.playing) {
+      player.pause()
+    } else {
+      if (status.currentTime >= status.duration) {
+        player.seekTo(0)
       }
-    } catch (err) {
-      console.error('Failed to play audio:', err)
+      player.play()
     }
   }
 
@@ -208,7 +187,7 @@ export function ChatSummary({
               style={styles.audioButton}
               onPress={toggleAudioPlayback}
             >
-              {isPlaying ? (
+              {status.playing ? (
                 <Pause size={24} color="#FFFFFF" />
               ) : (
                 <Play size={24} color="#FFFFFF" />
