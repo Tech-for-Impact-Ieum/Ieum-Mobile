@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React from 'react'
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   ViewStyle,
 } from 'react-native'
-import { Audio, AVPlaybackStatus } from 'expo-av'
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio'
 import { Play, Pause } from 'lucide-react-native'
 
 interface AudioPlayerProps {
@@ -27,79 +27,27 @@ export function AudioPlayer({
   variant = 'compact',
   isMyMessage = false,
 }: AudioPlayerProps) {
-  const [sound, setSound] = useState<Audio.Sound | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [position, setPosition] = useState(0)
-  const [duration, setDuration] = useState(initialDuration ? initialDuration * 1000 : 0)
-  const [isLoading, setIsLoading] = useState(false)
+  const player = useAudioPlayer(src)
+  const status = useAudioPlayerStatus(player)
 
-  useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.unloadAsync()
-      }
-    }
-  }, [sound])
-
-  const loadSound = async () => {
-    try {
-      setIsLoading(true)
-      const { sound: newSound, status } = await Audio.Sound.createAsync(
-        { uri: src },
-        { shouldPlay: true },
-        onPlaybackStatusUpdate
-      )
-      setSound(newSound)
-      setIsPlaying(true)
-      if (status.isLoaded && status.durationMillis) {
-        setDuration(status.durationMillis)
-      }
-    } catch (error) {
-      console.error('Error loading sound', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
-      setPosition(status.positionMillis)
-      if (status.durationMillis) {
-        setDuration(status.durationMillis)
-      }
-      setIsPlaying(status.isPlaying)
-      if (status.didJustFinish) {
-        setIsPlaying(false)
-        setPosition(0)
-        // Optional: unload or reset
-      }
-    }
-  }
-
-  const handlePlayPause = async () => {
-    if (!sound) {
-      await loadSound()
+  const handlePlayPause = () => {
+    if (status.playing) {
+      player.pause()
     } else {
-      if (isPlaying) {
-        await sound.pauseAsync()
-      } else {
-        if (position >= duration) {
-          await sound.replayAsync()
-        } else {
-          await sound.playAsync()
-        }
+      if (status.currentTime >= status.duration) {
+        player.seekTo(0)
       }
+      player.play()
     }
   }
 
-  const formatTime = (millis: number) => {
-    const totalSeconds = Math.floor(millis / 1000)
-    const minutes = Math.floor(totalSeconds / 60)
-    const seconds = totalSeconds % 60
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${minutes}:${secs.toString().padStart(2, '0')}`
   }
 
-  const progress = duration > 0 ? (position / duration) * 100 : 0
+  const progress = status.duration > 0 ? (status.currentTime / status.duration) * 100 : 0
 
   return (
     <View
@@ -115,11 +63,11 @@ export function AudioPlayer({
           isMyMessage ? styles.myPlayButton : styles.otherPlayButton,
         ]}
         onPress={handlePlayPause}
-        disabled={isLoading}
+        disabled={!status.isLoaded}
       >
-        {isLoading ? (
+        {!status.isLoaded ? (
           <ActivityIndicator size="small" color="#FFFFFF" />
-        ) : isPlaying ? (
+        ) : status.playing ? (
           <Pause size={20} color="#FFFFFF" fill="#FFFFFF" />
         ) : (
           <Play size={20} color="#FFFFFF" fill="#FFFFFF" style={{ marginLeft: 2 }} />
@@ -141,8 +89,8 @@ export function AudioPlayer({
         </View>
         
         <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>{formatTime(position)}</Text>
-          <Text style={styles.timeText}>{formatTime(duration)}</Text>
+          <Text style={styles.timeText}>{formatTime(status.currentTime)}</Text>
+          <Text style={styles.timeText}>{formatTime(status.duration || initialDuration || 0)}</Text>
         </View>
       </View>
     </View>
