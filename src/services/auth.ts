@@ -24,6 +24,26 @@ export interface RegisterParams {
 }
 
 export class Auth {
+  private static authListeners: (() => void)[] = []
+
+  /**
+   * Add a listener for auth state changes
+   */
+  static addAuthListener(listener: () => void): () => void {
+    this.authListeners.push(listener)
+    // Return unsubscribe function
+    return () => {
+      this.authListeners = this.authListeners.filter((l) => l !== listener)
+    }
+  }
+
+  /**
+   * Notify all listeners of auth state change
+   */
+  private static notifyAuthChange(): void {
+    this.authListeners.forEach((listener) => listener())
+  }
+
   /**
    * Register a new user
    * @param params Registration parameters (name, email, password required)
@@ -34,6 +54,7 @@ export class Auth {
     if (data.token && data.user) {
       await AsyncStorage.setItem('token', data.token)
       await AsyncStorage.setItem('user', JSON.stringify(data.user))
+      this.notifyAuthChange()
     }
 
     return data
@@ -50,6 +71,7 @@ export class Auth {
     if (data.token && data.user) {
       await AsyncStorage.setItem('token', data.token)
       await AsyncStorage.setItem('user', JSON.stringify(data.user))
+      this.notifyAuthChange()
     }
 
     return data
@@ -64,6 +86,7 @@ export class Auth {
     } finally {
       await AsyncStorage.removeItem('token')
       await AsyncStorage.removeItem('user')
+      this.notifyAuthChange()
     }
   }
 

@@ -40,8 +40,7 @@ export default function LoginScreen() {
     try {
       setLoading(true)
       await Auth.login(email, password)
-      // Navigation will automatically update when auth state changes
-      navigation.replace('Main' as any)
+      // Navigation will automatically update when auth state changes via listener
     } catch (error) {
       console.error('Login error:', error)
       Alert.alert(

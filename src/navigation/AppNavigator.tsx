@@ -72,14 +72,14 @@ function MainTabNavigator() {
       })}
     >
       <Tab.Screen
-        name="ChatList"
-        component={ChatListScreen}
-        options={{ tabBarLabel: '채팅' }}
-      />
-      <Tab.Screen
         name="Friends"
         component={FriendsScreen}
         options={{ tabBarLabel: '친구' }}
+      />
+      <Tab.Screen
+        name="ChatList"
+        component={ChatListScreen}
+        options={{ tabBarLabel: '채팅' }}
       />
       <Tab.Screen
         name="Settings"
@@ -97,6 +97,13 @@ export default function AppNavigator() {
   useEffect(() => {
     // Check authentication status on app start
     checkAuthStatus()
+
+    // Listen for auth state changes
+    const unsubscribe = Auth.addAuthListener(() => {
+      checkAuthStatus()
+    })
+
+    return unsubscribe
   }, [])
 
   const checkAuthStatus = async () => {
