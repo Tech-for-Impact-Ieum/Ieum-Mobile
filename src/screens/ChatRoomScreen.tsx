@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  Image,
 } from 'react-native'
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -32,6 +33,7 @@ import { EmojiPickerModal } from '../components/EmojiPickerModal'
 import { QuickResponseModal } from '../components/QuickResponseModal'
 import { VoiceInputModal } from '../components/VoiceInputModal'
 import { ChatSummary } from '../components/ChatSummary'
+import { AudioPlayer } from '../components/AudioPlayer'
 
 type ChatRoomRouteProp = RouteProp<RootStackParamList, 'ChatRoom'>
 type ChatRoomNavigationProp = NativeStackNavigationProp<
@@ -273,6 +275,8 @@ export default function ChatRoomScreen() {
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isMyMessage = currentUserId === item.senderId
+    const hasMedia = item.media && item.media.length > 0
+    const hasText = item.text && item.text.trim().length > 0
 
     return (
       <View
@@ -284,23 +288,112 @@ export default function ChatRoomScreen() {
         {!isMyMessage && (
           <Text style={styles.senderName}>{item.senderName}</Text>
         )}
-        {item.text && (
+
+        {/* Render Media Items */}
+        {hasMedia && (
+          <View style={styles.mediaContainer}>
+            {item.media.map((mediaItem, index) => {
+              if (!mediaItem.url) return null
+
+              return (
+                <View key={index} style={styles.mediaItem}>
+                  {/* Image */}
+                  {mediaItem.type === 'image' && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        // TODO: Add image lightbox/modal viewer
+                        console.log('Open image:', mediaItem.url)
+                      }}
+                    >
+                      <Image
+                        source={{ uri: mediaItem.url }}
+                        style={styles.imageMedia}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Audio */}
+                  {mediaItem.type === 'audio' && (
+                    <AudioPlayer
+                      src={mediaItem.url}
+                      duration={mediaItem.duration}
+                      fileName={mediaItem.fileName}
+                      isMyMessage={isMyMessage}
+                    />
+                  )}
+
+                  {/* Video */}
+                  {mediaItem.type === 'video' && (
+                    <TouchableOpacity
+                      style={styles.videoContainer}
+                      onPress={() => {
+                        // TODO: Open video player
+                        console.log('Open video:', mediaItem.url)
+                      }}
+                    >
+                      <Text style={styles.videoIcon}>🎬</Text>
+                      <Text style={styles.videoText}>Video</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* File */}
+                  {mediaItem.type === 'file' && (
+                    <TouchableOpacity
+                      style={[
+                        styles.fileContainer,
+                        isMyMessage
+                          ? styles.fileMyMessage
+                          : styles.fileOtherMessage,
+                      ]}
+                      onPress={() => {
+                        // TODO: Implement file download
+                        console.log('Download file:', mediaItem.url)
+                      }}
+                    >
+                      <Text style={styles.fileIcon}>📄</Text>
+                      <View style={styles.fileInfo}>
+                        <Text
+                          style={styles.fileName}
+                          numberOfLines={1}
+                          ellipsizeMode="middle"
+                        >
+                          {mediaItem.fileName || 'File'}
+                        </Text>
+                        {mediaItem.fileSize && (
+                          <Text style={styles.fileSize}>
+                            {(mediaItem.fileSize / 1024).toFixed(0)} KB
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={styles.downloadText}>↓</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )
+            })}
+          </View>
+        )}
+
+        {/* Render Text */}
+        {hasText && (
           <View
             style={[
               styles.messageBubble,
               isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble,
             ]}
-          >
-            <Text
-              style={[
-                styles.messageText,
-                isMyMessage ? styles.myMessageText : styles.otherMessageText,
-              ]}
             >
-              {item.text}
-            </Text>
+              <Text
+                style={[
+                  styles.messageText,
+                  isMyMessage ? styles.myMessageText : styles.otherMessageText,
+                ]}
+              >
+                {item.text}
+              </Text>
           </View>
         )}
+
         <Text style={styles.messageTime}>{formatTime(item.createdAt)}</Text>
       </View>
     )
@@ -472,5 +565,71 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Media styles
+  mediaContainer: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  mediaItem: {
+    maxWidth: 300,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  // Image styles
+  imageMedia: {
+    width: 300,
+    height: 200,
+    borderRadius: 12,
+  },
+  // Audio styles - MOVED TO AudioPlayer component
+  // Video styles
+  videoContainer: {
+    backgroundColor: '#F3F4F6',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    gap: 8,
+  },
+  videoIcon: {
+    fontSize: 48,
+  },
+  videoText: {
+    fontSize: 16,
+    color: '#374151',
+  },
+  // File styles
+  fileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    gap: 12,
+    minWidth: 250,
+  },
+  fileMyMessage: {
+    backgroundColor: '#FEE500',
+  },
+  fileOtherMessage: {
+    backgroundColor: '#FFFFFF',
+  },
+  fileIcon: {
+    fontSize: 32,
+  },
+  fileInfo: {
+    flex: 1,
+  },
+  fileName: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  fileSize: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  downloadText: {
+    fontSize: 20,
+    color: '#3B82F6',
   },
 })
