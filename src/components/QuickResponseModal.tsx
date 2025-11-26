@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { X } from 'lucide-react-native'
-import { Auth } from '../services/auth'
+import { chatApi } from '../utils/chatApi'
 
 interface QuickResponseModalProps {
   visible: boolean
@@ -40,20 +40,9 @@ export function QuickResponseModal({
     const fetchSuggestions = async () => {
       try {
         setIsLoading(true)
-        const token = await Auth.getToken()
-        const response = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL}/chat/rooms/${roomId}/quick-replies`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        )
+        const data = await chatApi.getQuickReplies(roomId)
 
-        const data = await response.json()
-        if (response.ok && data.ok) {
+        if (data.ok) {
           setSuggestions(data.suggestions || [])
         }
       } catch (error) {

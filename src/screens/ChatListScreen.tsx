@@ -15,7 +15,7 @@ import {
 } from 'react-native'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { ApiClient } from '../services/apiClient'
+import { chatApi } from '../utils/chatApi'
 import { Auth } from '../services/auth'
 import {
   initSocketClient,
@@ -49,7 +49,7 @@ export default function ChatListScreen() {
   const fetchRooms = async () => {
     try {
       setLoading(true)
-      const data = await ApiClient.get('/chat/rooms')
+      const data = await chatApi.getChatRooms()
       setRooms(data.rooms || [])
 
       // Join all rooms for real-time updates

@@ -14,7 +14,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native'
-import { ApiClient } from '../services/apiClient'
+import { userApi } from '../utils/userApi'
 import type { User } from '../types'
 
 export default function FriendsScreen() {
@@ -30,7 +30,7 @@ export default function FriendsScreen() {
   const fetchFriends = async () => {
     try {
       setLoading(true)
-      const data = await ApiClient.get('/friends')
+      const data = await userApi.getFriends()
       setFriends(data.friends || [])
     } catch (error) {
       console.error('Failed to fetch friends:', error)
@@ -48,7 +48,7 @@ export default function FriendsScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await ApiClient.delete(`/friends/${friendId}`)
+            await userApi.removeFriend(friendId)
             Alert.alert('성공', '친구가 삭제되었습니다')
             fetchFriends()
           } catch (error) {

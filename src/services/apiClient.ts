@@ -90,7 +90,9 @@ export class ApiClient {
         // The component should listen for auth errors and navigate to login
       }
 
-      throw new Error(data.error || 'Request failed')
+      const error = new Error(data.error || 'Request failed') as any
+      error.status = response.status
+      throw error
     }
 
     return data

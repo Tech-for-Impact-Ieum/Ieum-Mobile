@@ -17,7 +17,6 @@ import {
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ApiClient } from "../services/apiClient";
 import { Auth } from "../services/auth";
 import {
   initSocketClient,
@@ -37,6 +36,7 @@ import { VoiceInputModal } from "../components/VoiceInputModal";
 import { ChatSummary } from "../components/ChatSummary";
 import { AudioPlayer } from "../components/AudioPlayer";
 import { Colors } from "@/constants/colors";
+import { chatApi } from "../utils/chatApi";
 
 type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
 type ChatRoomNavigationProp = NativeStackNavigationProp<
@@ -77,20 +77,10 @@ export default function ChatRoomScreen() {
   useEffect(() => {
     const loadChatRoom = async () => {
       try {
-        const token = await Auth.getToken();
-        const response = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL}/chat/rooms/${roomId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.ok && data.room) {
-            setChatRoom(data.room);
-          }
+        const data = await chatApi.getChatRoom(roomId);
+        console.log("data", data);
+        if (data.ok && data.room) {
+          setChatRoom(data.room);
         }
       } catch (error) {
         console.error("Error loading chat room:", error);
@@ -105,20 +95,9 @@ export default function ChatRoomScreen() {
 
     const loadMessages = async () => {
       try {
-        const token = await Auth.getToken();
-        const response = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL}/chat/rooms/${roomId}/messages?currentUserId=${currentUserId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.ok && data.messages) {
-            setMessages(data.messages);
-          }
+        const data = await chatApi.getMessages(roomId, currentUserId);
+        if (data.ok && data.messages) {
+          setMessages(data.messages);
         }
       } catch (error) {
         console.error("Error loading messages:", error);
@@ -184,68 +163,11 @@ export default function ChatRoomScreen() {
     initSocket();
   }, [roomId, currentUserId, chatRoom?.id]);
 
-  // Mark messages as read when user is viewing the chat room
-  useEffect(() => {
-    if (!currentUserId || messages.length === 0 || !chatRoom?.id) {
-      return;
-    }
-
-    // Find the last message that's not sent by current user
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage) return;
-
-    // Don't mark as read if the last message is from current user
-    if (lastMessage.senderId === currentUserId) return;
-
-    // Check if current user has already read this message
-    const alreadyRead = lastMessage.readBy.some(
-      (r) => r.userId === currentUserId
-    );
-    if (alreadyRead) return;
-
-    // Mark messages as read after a short delay (to ensure user actually sees them)
-    const timeoutId = setTimeout(() => {
-      const numericRoomId =
-        typeof chatRoom.id === "string"
-          ? parseInt(chatRoom.id, 10)
-          : chatRoom.id;
-
-      console.log(
-        `Auto-marking messages as read in room ${numericRoomId} (last message: ${lastMessage.id})`
-      );
-
-      // Check socket connection status before marking as read
-      isSocketConnected();
-      markMessagesAsRead(numericRoomId, lastMessage.id);
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [messages, currentUserId, chatRoom?.id]);
-
   const sendMessageToAPI = async (text: string, media: MediaItem[] = []) => {
     if (!currentUserId) return;
 
     try {
-      const token = await Auth.getToken();
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/chat/rooms/${roomId}/messages`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            text,
-            media,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to send message");
-      }
-
-      const data = await response.json();
+      const data = await chatApi.sendMessage(roomId, text, media);
 
       if (data.ok && data.message) {
         setMessages((prev) => [...prev, data.message]);
@@ -301,15 +223,15 @@ export default function ChatRoomScreen() {
   }, [messages, roomId]);
 
   const readStatus = (message: Message) => {
-    console.log("numReadBy:", message.readBy);
+    // console.log("numReadBy:", message.readBy);
     const numReadBy = message.readBy.filter(
       (r) => r.userId !== message.senderId
     ).length;
     const isGroupChat = chatRoom?.roomType === "group";
     if (isGroupChat) {
-      return numReadBy > 0 ? readComponent(`${numReadBy}명 읽음`) : "";
+      return numReadBy > 0 ? readComponent(`${numReadBy}명 읽음`) : null;
     }
-    return numReadBy > 0 ? readComponent(`읽음`) : "";
+    return numReadBy > 0 ? readComponent(`읽음`) : null;
   };
 
   const readComponent = (readBy: string) => {
@@ -453,7 +375,7 @@ export default function ChatRoomScreen() {
         )}
 
         <View style={styles.messageFooter}>
-          {isMyMessage && readStatus(item)}
+          <Text>{isMyMessage && readStatus(item)}</Text>
           <Text style={styles.messageTime}>{formatTime(item.createdAt)}</Text>
         </View>
       </View>

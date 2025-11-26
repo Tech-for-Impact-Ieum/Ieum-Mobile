@@ -14,7 +14,7 @@ import {
 } from 'react-native'
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio'
 import { Play, Pause } from 'lucide-react-native'
-import { Auth } from '../services/auth'
+import { chatApi } from '../utils/chatApi'
 import type { ChatSummary as ChatSummaryType } from '../types'
 
 interface ChatSummaryProps {
@@ -48,41 +48,26 @@ export function ChatSummary({
     setError(null)
 
     try {
-      const token = await Auth.getToken()
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/chat/rooms/${roomId}/summary`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
+      const data = await chatApi.getSummary(roomId)
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('아직 생성된 요약이 없습니다.')
-          await generateSummary()
-        } else {
-          setError(data.error || '요약을 불러오는데 실패했습니다.')
-          onSummaryComplete()
-        }
-      } else if (data.ok) {
-        if (data.summary) {
-          setSummary(data.summary)
-          // Update player source if summary loaded
-          if (data.summary.audioUrl) {
-            player.replace(data.summary.audioUrl)
-          }
+      if (data.ok && data.summary) {
+        setSummary(data.summary)
+        // Update player source if summary loaded
+        if (data.summary.audioUrl) {
+          player.replace(data.summary.audioUrl)
         }
       }
 
       onSummaryComplete()
-    } catch (err) {
-      console.error('Failed to load summary:', err)
-      setError('네트워크 오류가 발생했습니다.')
-      onSummaryComplete()
+    } catch (err: any) {
+      if (err.status === 404) {
+        setError('아직 생성된 요약이 없습니다.')
+        await generateSummary()
+      } else {
+        console.error('Failed to load summary:', err)
+        setError(err.message || '요약을 불러오는데 실패했습니다.')
+        onSummaryComplete()
+      }
     } finally {
       setIsLoading(false)
     }
@@ -93,24 +78,7 @@ export function ChatSummary({
     setError(null)
 
     try {
-      const token = await Auth.getToken()
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/chat/rooms/${roomId}/summary`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || '요약 생성에 실패했습니다.')
-        onSummaryComplete()
-        return
-      }
+      const data = await chatApi.generateSummary(roomId)
 
       if (data.ok && data.summary) {
         setSummary(data.summary)
@@ -120,9 +88,9 @@ export function ChatSummary({
       }
 
       onSummaryComplete()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to generate summary:', err)
-      setError('네트워크 오류가 발생했습니다.')
+      setError(err.message || '요약 생성에 실패했습니다.')
       onSummaryComplete()
     } finally {
       setIsGenerating(false)
