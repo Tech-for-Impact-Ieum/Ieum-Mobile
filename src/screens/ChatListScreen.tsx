@@ -21,9 +21,10 @@ import {
   initSocketClient,
   onNewMessage,
   onMessagesRead,
+  onUnreadCountUpdate,
   joinRoom,
 } from '../services/socketClient'
-import type { ChatRoom } from '../types'
+import type { ChatRoom, UnreadCountUpdateEvent } from '../types'
 import type { RootStackParamList } from '../navigation/AppNavigator'
 
 type ChatListNavigationProp = NativeStackNavigationProp<
@@ -118,9 +119,23 @@ export default function ChatListScreen() {
         }
       })
 
+      // Listen for unread count updates
+      const unsubscribeUnreadCount = onUnreadCountUpdate((data: UnreadCountUpdateEvent) => {
+        console.log('📊 Unread count update:', data)
+        setRooms((prev) =>
+          prev.map((room) => {
+            if (room.id === data.roomId) {
+              return { ...room, unreadCount: data.unreadCount }
+            }
+            return room
+          }),
+        )
+      })
+
       return () => {
         unsubscribeNewMessage()
         unsubscribeMessagesRead()
+        unsubscribeUnreadCount()
       }
     }
   }
