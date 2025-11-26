@@ -31,16 +31,6 @@ React Native mobile application for the Ieum chat platform, converted from the N
    npm install
    ```
 
-3. **Set up environment variables**:
-   Create `.env` and add your backend URLs:
-   ```
-   EXPO_PUBLIC_API_URL=http://YOUR_IP:4000/api
-   EXPO_PUBLIC_SOCKET_URL=http://YOUR_IP:4001
-   EXPO_PUBLIC_SOCKET_PORT=4001
-   ```
-   
-   **Note**: Replace `YOUR_IP` with your computer's local IP address (e.g., `192.168.1.100`) for testing on physical devices.
-
 ## Running the App
 
 ### Development Mode

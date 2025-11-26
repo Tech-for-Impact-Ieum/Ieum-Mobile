@@ -1,8 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { Auth } from './auth';
 import { MediaItem } from '../types';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { EXPO_PUBLIC_API_URL } from '../constants/urls';
 
 // FileSystemUploadType enum values: BINARY_CONTENT = 0, MULTIPART = 1
 const UPLOAD_TYPE_BINARY = 0;
@@ -18,7 +17,7 @@ export const MediaService = {
     const token = await Auth.getToken();
     
     // Use FileSystem.uploadAsync for reliable file upload
-    const response = await FileSystem.uploadAsync(`${API_URL}/transcribe`, uri, {
+    const response = await FileSystem.uploadAsync(`${EXPO_PUBLIC_API_URL}/transcribe`, uri, {
       fieldName: 'file',
       httpMethod: 'POST',
       uploadType: UPLOAD_TYPE_MULTIPART as any,
@@ -57,7 +56,7 @@ export const MediaService = {
     const mimeType = type === 'audio' ? 'audio/m4a' : 'image/jpeg'; // Simplified
 
     // 1. Get Presigned URL
-    const presignedRes = await fetch(`${API_URL}/media/upload-url`, {
+    const presignedRes = await fetch(`${EXPO_PUBLIC_API_URL}/media/upload-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

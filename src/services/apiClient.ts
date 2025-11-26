@@ -4,9 +4,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
-
-// TODO: Update these values with your environment variables
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000/api'
+import { EXPO_PUBLIC_API_URL } from '../constants/urls'
 
 export class ApiClient {
   private static async getAuthHeaders(): Promise<HeadersInit> {
@@ -18,7 +16,7 @@ export class ApiClient {
   }
 
   static async get(endpoint: string) {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${EXPO_PUBLIC_API_URL}${endpoint}`, {
       method: 'GET',
       headers: await this.getAuthHeaders(),
     })
@@ -26,7 +24,7 @@ export class ApiClient {
   }
 
   static async post(endpoint: string, data?: unknown) {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${EXPO_PUBLIC_API_URL}${endpoint}`, {
       method: 'POST',
       headers: await this.getAuthHeaders(),
       body: data ? JSON.stringify(data) : undefined,
@@ -35,7 +33,7 @@ export class ApiClient {
   }
 
   static async put(endpoint: string, data: unknown) {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${EXPO_PUBLIC_API_URL}${endpoint}`, {
       method: 'PUT',
       headers: await this.getAuthHeaders(),
       body: JSON.stringify(data),
@@ -44,7 +42,7 @@ export class ApiClient {
   }
 
   static async patch(endpoint: string, data: unknown) {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${EXPO_PUBLIC_API_URL}${endpoint}`, {
       method: 'PATCH',
       headers: await this.getAuthHeaders(),
       body: JSON.stringify(data),
@@ -53,7 +51,7 @@ export class ApiClient {
   }
 
   static async delete(endpoint: string) {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${EXPO_PUBLIC_API_URL}${endpoint}`, {
       method: 'DELETE',
       headers: await this.getAuthHeaders(),
     })
@@ -68,7 +66,7 @@ export class ApiClient {
     }
     // Don't set Content-Type for FormData - let browser set it with boundary
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${EXPO_PUBLIC_API_URL}${endpoint}`, {
       method: 'POST',
       headers,
       body: formData,

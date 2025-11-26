@@ -16,6 +16,7 @@ import {
   MessagesReadEvent,
   UserTypingEvent,
 } from "../types";
+import { EXPO_PUBLIC_SOCKET_URL } from "../constants/urls";
 
 let socket: Socket | null = null;
 const joinedRooms: Set<number> = new Set();
@@ -32,7 +33,7 @@ export async function initSocketClient(token?: string) {
   }
 
   // TODO: Update with your environment variable
-  const url = process.env.EXPO_PUBLIC_SOCKET_URL || "http://localhost:4001";
+  const url = EXPO_PUBLIC_SOCKET_URL
   console.log("🔌 Initializing socket connection to:", url);
 
   socket = io(url, {
