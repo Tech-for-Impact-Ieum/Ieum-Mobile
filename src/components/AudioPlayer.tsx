@@ -31,6 +31,7 @@ export function AudioPlayer({
   const status = useAudioPlayerStatus(player)
 
   const handlePlayPause = () => {
+    console.log("Audio Player Status:", status)
     if (status.playing) {
       player.pause()
     } else {

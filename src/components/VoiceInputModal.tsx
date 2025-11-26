@@ -15,10 +15,9 @@ import {
   TextInput,
   Alert,
 } from 'react-native'
-import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio'
-import * as FileSystem from 'expo-file-system/legacy'
+import { useAudioRecorder, setAudioModeAsync, AudioModule, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio'
 import { Mic, X } from 'lucide-react-native'
-import { Auth } from '../services/auth'
+import { MediaService } from '../services/media'
 import type { MediaItem } from '../types'
 
 interface VoiceInputModalProps {
@@ -78,6 +77,22 @@ export function VoiceInputModal({
     }
   }, [visible])
 
+  useEffect(() => {
+    (async () => {
+      const status = await AudioModule.requestRecordingPermissionsAsync();
+      if (!status.granted) {
+        Alert.alert('음성 녹음을 위해 권한이 필요합니다.');
+      }
+
+      setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: true,
+      });
+    })();
+  }, []);
+
+
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -94,6 +109,7 @@ export function VoiceInputModal({
       }
 
       // Start recording
+      await recorder.prepareToRecordAsync()
       recorder.record()
       setIsRecording(true)
     } catch (err) {
@@ -110,6 +126,7 @@ export function VoiceInputModal({
     try {
       await recorder.stop()
       const uri = recorder.uri
+      console.log("Recording stopped, URI:", uri)
       setIsRecording(false)
       return uri
     } catch (err) {
@@ -123,44 +140,17 @@ export function VoiceInputModal({
     try {
       setIsTranscribing(true)
       const uri = await stopRecording()
+      console.log("Recording stopped, URI:", uri)
       if (!uri) return
 
       setAudioUri(uri)
 
-      // Read the audio file
-      const fileInfo = await FileSystem.getInfoAsync(uri)
-      if (!fileInfo.exists) {
-        throw new Error('Audio file not found')
+      const text = await MediaService.transcribeAudio(uri)
+      setTranscript(text || '')
+
+      if (!text){
+        Alert.alert('음성을 텍스트로 변환할 수 없습니다.')
       }
-
-      // Create form data
-      const formData = new FormData()
-      formData.append('file', {
-        uri,
-        name: 'audio.m4a',
-        type: 'audio/m4a',
-      } as any)
-
-      const token = await Auth.getToken()
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/transcribe`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        },
-      )
-
-      const data = await response.json()
-      if (!response.ok || !data.ok) {
-        console.error('Transcription failed:', data)
-        setTranscript('음성을 텍스트로 변환할 수 없습니다.')
-        return
-      }
-
-      setTranscript(data.text || '')
     } catch (err) {
       console.error('Failed to transcribe audio:', err)
       setTranscript('음성을 텍스트로 변환하는 중 오류가 발생했습니다.')
@@ -173,7 +163,6 @@ export function VoiceInputModal({
     setRecordingTime(0)
     setTranscript('')
     setAudioUri(null)
-    setAudioUri(null)
     handleStart()
   }
 
@@ -183,41 +172,7 @@ export function VoiceInputModal({
     try {
       setIsUploading(true)
 
-      // Read audio file
-      const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
-        encoding: 'base64',
-      })
-
-      // Upload to S3 via backend
-      const token = await Auth.getToken()
-      const uploadResponse = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/upload`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            file: audioBase64,
-            fileName: 'voice-message.m4a',
-            mimeType: 'audio/m4a',
-          }),
-        },
-      )
-
-      const uploadData = await uploadResponse.json()
-      if (!uploadResponse.ok || !uploadData.ok) {
-        throw new Error('Upload failed')
-      }
-
-      const audioMedia: MediaItem = {
-        type: 'audio',
-        key: uploadData.key,
-        url: uploadData.url,
-        fileName: 'voice-message.m4a',
-        mimeType: 'audio/m4a',
-      }
+      const audioMedia = await MediaService.uploadMedia(audioUri, 'audio')
 
       onSend(transcript, audioMedia)
       onClose()

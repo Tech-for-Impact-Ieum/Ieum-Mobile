@@ -132,6 +132,9 @@ export function ChatSummary({
   const toggleAudioPlayback = () => {
     if (!summary?.audioUrl) return
 
+    console.log("Summary Audio URL:", summary?.audioUrl)
+    console.log("Audio Player Status:", status)
+
     if (status.playing) {
       player.pause()
     } else {
