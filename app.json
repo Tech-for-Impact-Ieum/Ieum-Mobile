@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Ieum-Mobile",
-    "slug": "Ieum-Mobile",
+    "slug": "ieum",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jdhosorganization.ieum",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +25,12 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.jdhosorganization.ieum"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,6 +38,12 @@
     "plugins": [
       "expo-audio",
       "expo-video"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "52a76008-f69a-4637-baf5-3cdffc42111c"
+      }
+    },
+    "owner": "jdhos-organization"
   }
 }

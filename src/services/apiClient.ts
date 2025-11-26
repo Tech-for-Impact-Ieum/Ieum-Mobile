@@ -95,4 +95,13 @@ export class ApiClient {
 
     return data
   }
+
+  static async updatePushToken(token: string) {
+    try {
+      await this.post('/users/push-token', { token })
+    } catch (error) {
+      console.error('Failed to update push token:', error)
+      // Don't throw error here to prevent blocking app flow
+    }
+  }
 }
