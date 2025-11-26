@@ -3,40 +3,41 @@
  * Uses React Navigation with Bottom Tabs and Stack Navigation
  */
 
-import React, { useState, useEffect } from 'react'
-import { NavigationContainer } from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { MessageCircle, Users, Settings } from 'lucide-react-native'
-import { Auth } from '../services/auth'
+import React, { useState, useEffect } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { MessageCircle, Users, Settings } from "lucide-react-native";
+import { Auth } from "../services/auth";
+import { Colors } from "@/constants/colors";
 
 // Import screens (will be created next)
-import LoginScreen from '../screens/LoginScreen'
-import ChatListScreen from '../screens/ChatListScreen'
-import ChatRoomScreen from '../screens/ChatRoomScreen'
-import FriendsScreen from '../screens/FriendsScreen'
-import SettingsScreen from '../screens/SettingsScreen'
+import LoginScreen from "../screens/LoginScreen";
+import ChatListScreen from "../screens/ChatListScreen";
+import ChatRoomScreen from "../screens/ChatRoomScreen";
+import FriendsScreen from "../screens/FriendsScreen";
+import SettingsScreen from "../screens/SettingsScreen";
 
 // Type definitions for navigation
 export type RootStackParamList = {
-  Auth: undefined
-  Main: undefined
-  ChatRoom: { roomId: number; roomName: string }
-}
+  Auth: undefined;
+  Main: undefined;
+  ChatRoom: { roomId: number; roomName: string };
+};
 
 export type AuthStackParamList = {
-  Login: undefined
-}
+  Login: undefined;
+};
 
 export type MainTabParamList = {
-  ChatList: undefined
-  Friends: undefined
-  Settings: undefined
-}
+  ChatList: undefined;
+  Friends: undefined;
+  Settings: undefined;
+};
 
-const Stack = createNativeStackNavigator<RootStackParamList>()
-const AuthStack = createNativeStackNavigator<AuthStackParamList>()
-const Tab = createBottomTabNavigator<MainTabParamList>()
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 // Auth Stack Navigator
 function AuthNavigator() {
@@ -44,7 +45,7 @@ function AuthNavigator() {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
     </AuthStack.Navigator>
-  )
+  );
 }
 
 // Main Bottom Tab Navigator
@@ -54,66 +55,75 @@ function MainTabNavigator() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
-          if (route.name === 'ChatList') {
-            return <MessageCircle color={color} size={size} />
-          } else if (route.name === 'Friends') {
-            return <Users color={color} size={size} />
-          } else if (route.name === 'Settings') {
-            return <Settings color={color} size={size} />
+          if (route.name === "ChatList") {
+            return <MessageCircle color={color} size={size} />;
+          } else if (route.name === "Friends") {
+            return <Users color={color} size={size} />;
+          } else if (route.name === "Settings") {
+            return <Settings color={color} size={size} />;
           }
-          return null
+          return null;
         },
-        tabBarActiveTintColor: '#000000',
-        tabBarInactiveTintColor: '#999999',
+        tabBarActiveTintColor: "#000000",
+        tabBarInactiveTintColor: "#999999",
+        tabBarActiveBackgroundColor: Colors.kakaoGray,
+        tabBarItemStyle: {
+          marginHorizontal: 8,
+          marginVertical: 4,
+          borderRadius: 8,
+        },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
+          fontSize: 18,
+          fontWeight: "600",
+        },
+        tabBarStyle: {
+          height: 64,
         },
       })}
     >
       <Tab.Screen
         name="Friends"
         component={FriendsScreen}
-        options={{ tabBarLabel: '친구' }}
+        options={{ tabBarLabel: "친구" }}
       />
       <Tab.Screen
         name="ChatList"
         component={ChatListScreen}
-        options={{ tabBarLabel: '채팅' }}
+        options={{ tabBarLabel: "채팅" }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ tabBarLabel: '설정' }}
+        options={{ tabBarLabel: "설정" }}
       />
     </Tab.Navigator>
-  )
+  );
 }
 
 // Main App Navigator
 export default function AppNavigator() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Check authentication status on app start
-    checkAuthStatus()
+    checkAuthStatus();
 
     // Listen for auth state changes
     const unsubscribe = Auth.addAuthListener(() => {
-      checkAuthStatus()
-    })
+      checkAuthStatus();
+    });
 
-    return unsubscribe
-  }, [])
+    return unsubscribe;
+  }, []);
 
   const checkAuthStatus = async () => {
-    const authenticated = await Auth.isAuthenticated()
-    setIsAuthenticated(authenticated)
-  }
+    const authenticated = await Auth.isAuthenticated();
+    setIsAuthenticated(authenticated);
+  };
 
   // Show loading screen while checking auth
   if (isAuthenticated === null) {
-    return null // Could show a loading screen here
+    return null; // Could show a loading screen here
   }
 
   return (
@@ -133,5 +143,5 @@ export default function AppNavigator() {
         )}
       </Stack.Navigator>
     </NavigationContainer>
-  )
+  );
 }
