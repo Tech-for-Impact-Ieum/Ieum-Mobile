@@ -31,7 +31,8 @@
           "icon": "./assets/icon.png",
           "color": "#ffffff"
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "android": {
       "adaptiveIcon": {
