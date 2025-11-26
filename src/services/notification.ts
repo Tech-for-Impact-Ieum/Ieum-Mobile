@@ -44,7 +44,7 @@ export async function registerForPushNotificationsAsync() {
       const projectId =
         Constants?.expoConfig?.extra?.eas?.projectId ||
         Constants?.easConfig?.projectId
-        
+      
       token = (
         await Notifications.getExpoPushTokenAsync({
           projectId,
@@ -52,7 +52,7 @@ export async function registerForPushNotificationsAsync() {
       ).data
       console.log('Expo Push Token:', token)
     } catch (e) {
-      console.error('Error getting push token:', e)
+      console.warn('Error getting push token. If you are using Expo Go, this is expected.', e)
     }
   } else {
     console.log('Must use physical device for Push Notifications')

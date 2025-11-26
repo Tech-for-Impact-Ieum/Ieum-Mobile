@@ -19,6 +19,20 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-audio",
+      "expo-video",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#ffffff"
+        }
+      ]
+    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -30,15 +44,9 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
-      "package": "com.jdhosorganization.ieum"
+      "package": "com.jdhosorganization.ieum",
+      "googleServicesFile": "./google-services.json"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-audio",
-      "expo-video"
-    ],
     "extra": {
       "eas": {
         "projectId": "52a76008-f69a-4637-baf5-3cdffc42111c"
