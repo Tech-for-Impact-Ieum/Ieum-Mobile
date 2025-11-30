@@ -7,9 +7,11 @@ import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { MessageCircle, Users, Settings } from "lucide-react-native";
 import { Auth } from "../services/auth";
 import { Colors } from "@/constants/colors";
+import ChatIcon from "@/assets/navigator-chat.svg";
+import FriendIcon from "@/assets/navigator-friend.svg";
+import SettingIcon from "@/assets/navigator-setting.svg";
 
 // Import screens (will be created next)
 import LoginScreen from "../screens/LoginScreen";
@@ -56,28 +58,28 @@ function MainTabNavigator() {
         headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
           if (route.name === "ChatList") {
-            return <MessageCircle color={color} size={size} />;
+            return <ChatIcon width={size} height={size} color={color} />;
           } else if (route.name === "Friends") {
-            return <Users color={color} size={size} />;
+            return <FriendIcon width={size} height={size} color={color} />;
           } else if (route.name === "Settings") {
-            return <Settings color={color} size={size} />;
+            return <SettingIcon width={size} height={size} color={color} />;
           }
           return null;
         },
-        tabBarActiveTintColor: "#000000",
-        tabBarInactiveTintColor: "#999999",
-        tabBarActiveBackgroundColor: Colors.kakaoGray,
-        tabBarItemStyle: {
-          marginHorizontal: 8,
-          marginVertical: 4,
-          borderRadius: 8,
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.primaryDeactivated,
+        tabBarIconStyle: {
+          marginBottom: 4,
         },
         tabBarLabelStyle: {
-          fontSize: 18,
-          fontWeight: "600",
+          fontSize: 20,
+          fontWeight: "700",
+          marginTop: -8,
         },
         tabBarStyle: {
-          height: 64,
+          height: 76,
+          paddingBottom: 12,
+          backgroundColor: "white",
         },
       })}
     >

@@ -579,7 +579,7 @@ export default function ChatRoomScreen() {
           disabled={!inputMessage.trim() || isLoading}
         >
           <Image
-            source={require("../../assets/send-icon.svg")}
+            source={require("@/assets/send-icon.svg")}
             style={styles.sendButtonIcon}
           />
         </TouchableOpacity>
