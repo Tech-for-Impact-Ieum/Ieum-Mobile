@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -12,6 +13,7 @@ import { Colors } from "@/constants/colors";
 import ChatIcon from "@/assets/navigator-chat.svg";
 import FriendIcon from "@/assets/navigator-friend.svg";
 import SettingIcon from "@/assets/navigator-setting.svg";
+import { ChevronLeft } from "lucide-react-native";
 
 // Import screens (will be created next)
 import LoginScreen from "../screens/LoginScreen";
@@ -139,7 +141,46 @@ export default function AppNavigator() {
             <Stack.Screen
               name="ChatRoom"
               component={ChatRoomScreen}
-              options={{ headerShown: true }}
+              options={{
+                headerShown: true,
+                headerStyle: {
+                  backgroundColor: "#FFFFFF",
+                },
+                headerTitleAlign: "center",
+                headerTitleStyle: {
+                  fontSize: 30,
+                  fontWeight: "700",
+                },
+                headerShadowVisible: false,
+                header: ({ options, route, navigation }) => (
+                  <View
+                    style={{
+                      paddingTop: 60,
+                      paddingBottom: 16,
+                      backgroundColor: "#FFFFFF",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => navigation.goBack()}
+                      style={{
+                        position: "absolute",
+                        left: 16,
+                        bottom: 10,
+                        padding: 8,
+                      }}
+                    >
+                      <ChevronLeft size={30} color="#000000" />
+                    </TouchableOpacity>
+                    <Text style={{ fontSize: 30, fontWeight: "700" }}>
+                      {options.title || route.name}
+                    </Text>
+                  </View>
+                ),
+              }}
             />
           </>
         )}

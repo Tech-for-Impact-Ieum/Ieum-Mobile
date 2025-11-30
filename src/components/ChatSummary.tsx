@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import { Play, Pause } from "lucide-react-native";
+import { Play, Pause, MessageSquareText } from "lucide-react-native";
 import { chatApi } from "../utils/chatApi";
 import type { ChatSummary as ChatSummaryType } from "../types";
 import { Colors } from "@/constants/colors";
@@ -133,24 +133,13 @@ export function ChatSummary({
       {summary && !isLoading && (
         <View style={styles.summaryContainer}>
           <View style={styles.summaryTextContainer}>
-            <View style={styles.iconRow}>
-              <Text style={styles.icon}>💬</Text>
-              <Text style={styles.summaryText}>{summary.text}</Text>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              <MessageSquareText size={20} color={Colors.primary} />
+              <Text style={styles.summaryHeader}>채팅 요약</Text>
             </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaText}>
-                📊 {summary.messageCount}개 메시지
-              </Text>
-              <Text style={styles.metaText}>
-                🕐{" "}
-                {new Date(summary.createdAt).toLocaleDateString("ko-KR", {
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </View>
+            <Text style={styles.summaryText}>{summary.text}</Text>
           </View>
 
           {/* TTS Audio Player */}
@@ -160,9 +149,9 @@ export function ChatSummary({
               onPress={toggleAudioPlayback}
             >
               {status.playing ? (
-                <Pause size={24} color="#FFFFFF" />
+                <Pause fill="#FFFFFF" size={24} color="#FFFFFF" />
               ) : (
-                <Play size={24} color="#FFFFFF" />
+                <Play fill="#FFFFFF" size={24} color="#FFFFFF" />
               )}
             </TouchableOpacity>
           )}
@@ -194,8 +183,8 @@ export function ChatSummary({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#FFFFFF",
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
     padding: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -220,9 +209,9 @@ const styles = StyleSheet.create({
   },
   summaryTextContainer: {
     flex: 1,
-    backgroundColor: Colors.secondary,
     borderRadius: 12,
     padding: 16,
+    gap: 8,
   },
   iconRow: {
     flexDirection: "row",
@@ -232,9 +221,15 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 20,
   },
+  summaryHeader: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: Colors.primary,
+  },
   summaryText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 20,
+    fontWeight: "400",
     lineHeight: 22,
     color: "#1F2937",
   },

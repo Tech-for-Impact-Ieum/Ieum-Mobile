@@ -51,6 +51,11 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E5E7EB",
     borderTopEndRadius: 30,
     borderTopStartRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 0,
   },
   button: {
     flex: 1,
