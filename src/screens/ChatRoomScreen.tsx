@@ -38,6 +38,8 @@ import { AudioPlayer } from "../components/AudioPlayer";
 import { Colors } from "@/constants/colors";
 import { chatApi } from "../utils/chatApi";
 import SendIcon from "@/assets/send-icon.svg";
+import { Volume2 } from "lucide-react-native";
+import * as Speech from "expo-speech";
 
 type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
 type ChatRoomNavigationProp = NativeStackNavigationProp<
@@ -254,6 +256,15 @@ export default function ChatRoomScreen() {
     });
   };
 
+  const handleTTSPress = (message: Message) => {
+    // Only play TTS if the message has text content
+    if (message.text && message.text.trim().length > 0) {
+      Speech.speak(message.text, {
+        language: "ko-KR",
+      });
+    }
+  };
+
   const renderMessage = ({ item }: { item: Message }) => {
     const isMyMessage = currentUserId === item.senderId;
     const hasMedia = item.media && item.media.length > 0;
@@ -287,7 +298,14 @@ export default function ChatRoomScreen() {
             {/* Message Content */}
             <View style={styles.messageContentContainer} id="messageContainer">
               {/* Sender Name */}
-              <Text style={styles.senderName}>{item.senderName}</Text>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
+                <Text style={styles.senderName}>{item.senderName}</Text>
+                <TouchableOpacity onPress={() => handleTTSPress(item)}>
+                  <Volume2 size={24} color="#00000080" style={styles.ttsButton} />
+                </TouchableOpacity>
+              </View>
 
               {/* Render Media Items */}
               {hasMedia && (
@@ -663,6 +681,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
     marginBottom: 4,
+  },
+  ttsButton: {
+    paddingBottom: 6,
   },
   messageBubble: {
     maxWidth: "75%",
