@@ -3,7 +3,7 @@
  * Adapted from Next.js friends page
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,76 +13,95 @@ import {
   StyleSheet,
   Alert,
   RefreshControl,
-} from 'react-native'
-import { userApi } from '../utils/userApi'
-import type { User } from '../types'
+  Image,
+} from "react-native";
+import { userApi } from "../utils/userApi";
+import type { User } from "../types";
+import { AddFriendModal } from "../components/AddFriendModal";
+import { Plus } from "lucide-react-native";
+import { Colors } from "@/constants/colors";
 
 export default function FriendsScreen() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [friends, setFriends] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [friends, setFriends] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showAddFriend, setShowAddFriend] = useState(false);
 
   useEffect(() => {
-    fetchFriends()
-  }, [])
+    fetchFriends();
+  }, []);
 
   const fetchFriends = async () => {
     try {
-      setLoading(true)
-      const data = await userApi.getFriends()
-      setFriends(data.friends || [])
+      setLoading(true);
+      const data = await userApi.getFriends();
+      setFriends(data.friends || []);
     } catch (error) {
-      console.error('Failed to fetch friends:', error)
+      console.error("Failed to fetch friends:", error);
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(false);
+      setRefreshing(false);
     }
-  }
+  };
 
   const removeFriend = async (friendId: number) => {
-    Alert.alert('친구 삭제', '정말 친구를 삭제하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
+    Alert.alert("친구 삭제", "정말 친구를 삭제하시겠습니까?", [
+      { text: "취소", style: "cancel" },
       {
-        text: '삭제',
-        style: 'destructive',
+        text: "삭제",
+        style: "destructive",
         onPress: async () => {
           try {
-            await userApi.removeFriend(friendId)
-            Alert.alert('성공', '친구가 삭제되었습니다')
-            fetchFriends()
+            await userApi.removeFriend(friendId);
+            Alert.alert("성공", "친구가 삭제되었습니다");
+            fetchFriends();
           } catch (error) {
-            console.error('Failed to remove friend:', error)
-            Alert.alert('오류', '친구 삭제에 실패했습니다')
+            console.error("Failed to remove friend:", error);
+            Alert.alert("오류", "친구 삭제에 실패했습니다");
           }
         },
       },
-    ])
-  }
+    ]);
+  };
 
   const onRefresh = () => {
-    setRefreshing(true)
-    fetchFriends()
-  }
+    setRefreshing(true);
+    fetchFriends();
+  };
 
   const filteredFriends = friends.filter((friend) =>
-    friend.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+    friend.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const renderFriend = ({ item }: { item: User }) => (
     <View style={styles.friendItem}>
+      {/* Friend Image */}
+      {item.setting?.imageUrl ? (
+        <Image
+          source={{ uri: item.setting.imageUrl }}
+          style={styles.friendImage}
+        />
+      ) : (
+        <View style={styles.friendImagePlaceholder}>
+          <Text style={styles.friendImagePlaceholderText}>
+            {item.name.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.friendInfo}>
         <Text style={styles.friendName}>{item.name}</Text>
-        <Text style={styles.friendEmail}>{item.email || '이메일 없음'}</Text>
+        {/* <Text style={styles.friendEmail}>{item.email || '이메일 없음'}</Text> */}
       </View>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => removeFriend(item.id)}
       >
         <Text style={styles.deleteButtonText}>삭제</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
-  )
+  );
 
   return (
     <View style={styles.container}>
@@ -99,6 +118,19 @@ export default function FriendsScreen() {
         />
       </View>
 
+      {/* Add Friend Button */}
+      <View style={styles.addButtonContainer}>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => setShowAddFriend(true)}
+        >
+          <View style={styles.addButtonIconContainer}>
+            <Plus size={20} color="#FFFFFF" />
+          </View>
+          <Text style={styles.addButtonText}>친구 추가</Text>
+        </TouchableOpacity>
+      </View>
+
       <FlatList
         data={filteredFriends}
         renderItem={renderFriend}
@@ -113,85 +145,138 @@ export default function FriendsScreen() {
           </View>
         }
       />
+
+      <AddFriendModal
+        visible={showAddFriend}
+        onClose={() => setShowAddFriend(false)}
+        onFriendAdded={fetchFriends}
+      />
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#FFFFFF",
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontWeight: "bold",
+    color: "#000000",
   },
   searchContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    backgroundColor: "#FFFFFF",
   },
   searchInput: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 16,
     fontSize: 16,
+  },
+  addButtonContainer: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 10,
+  },
+  addButton: {
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    borderColor: "#E5E7EB",
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 12,
+  },
+  addButtonIconContainer: {
+    width: 55,
+    height: 55,
+    borderRadius: 27.5,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "#000000",
+    fontSize: 24,
+    fontWeight: "500",
   },
   listContent: {
     paddingBottom: 20,
   },
   friendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: "#F3F4F6",
+  },
+  friendImage: {
+    width: 55,
+    height: 55,
+    borderRadius: 27.5,
+    marginRight: 12,
+  },
+  friendImagePlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  friendImagePlaceholderText: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "600",
   },
   friendInfo: {
     flex: 1,
   },
   friendName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: 24,
+    fontWeight: "500",
+    color: "#000000",
     marginBottom: 4,
   },
   friendEmail: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   deleteButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#EF4444',
+    borderColor: "#EF4444",
   },
   deleteButtonText: {
-    color: '#EF4444',
+    color: "#EF4444",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   emptyContainer: {
     paddingTop: 60,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: "#9CA3AF",
   },
-})
+});
