@@ -106,7 +106,6 @@ export default function FriendsScreen() {
     );
   };
 
-  console.log("Rendering FriendsScreen with friends:", friends);
   return (
     <View style={styles.container}>
       <View style={styles.header}>

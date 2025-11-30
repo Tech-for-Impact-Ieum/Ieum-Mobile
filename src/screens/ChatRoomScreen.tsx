@@ -270,7 +270,6 @@ export default function ChatRoomScreen() {
     const hasMedia = item.media && item.media.length > 0;
     const hasText = item.text && item.text.trim().length > 0;
 
-    console.log("Rendering message:", item.senderName, item.senderImageUrl);
     const isDefaultAvatar = item.senderImageUrl?.includes("ui-avatars.com");
     const shouldShowImage = item.senderImageUrl && !isDefaultAvatar;
 
