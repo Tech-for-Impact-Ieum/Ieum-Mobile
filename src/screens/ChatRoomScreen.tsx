@@ -303,7 +303,11 @@ export default function ChatRoomScreen() {
               >
                 <Text style={styles.senderName}>{item.senderName}</Text>
                 <TouchableOpacity onPress={() => handleTTSPress(item)}>
-                  <Volume2 size={24} color="#00000080" style={styles.ttsButton} />
+                  <Volume2
+                    size={24}
+                    color="#00000080"
+                    style={styles.ttsButton}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -651,12 +655,12 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "flex-start",
+    gap: 16,
   },
   profileImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 8,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   profileImagePlaceholder: {
     width: 32,
