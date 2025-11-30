@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { chatApi } from '../utils/chatApi';
-import { Auth } from '../services/auth';
-import type { User } from '../types';
+} from "react-native";
+import { chatApi } from "../utils/chatApi";
+import { Auth } from "../services/auth";
+import type { User } from "../types";
 
 interface CreateChatRoomModalProps {
   visible: boolean;
@@ -25,7 +25,7 @@ export function CreateChatRoomModal({
   onClose,
   onRoomCreated,
 }: CreateChatRoomModalProps) {
-  const [roomName, setRoomName] = useState('');
+  const [roomName, setRoomName] = useState("");
   const [friends, setFriends] = useState<User[]>([]);
   const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,9 +42,10 @@ export function CreateChatRoomModal({
       setFriendsLoading(true);
       const data = await chatApi.getFriends();
       setFriends(data.friends || []);
+      console.log("Fetched friends:", data.friends);
     } catch (error) {
-      console.error('Failed to fetch friends:', error);
-      Alert.alert('오류', '친구 목록을 불러오는데 실패했습니다.');
+      console.error("Failed to fetch friends:", error);
+      Alert.alert("오류", "친구 목록을 불러오는데 실패했습니다.");
     } finally {
       setFriendsLoading(false);
     }
@@ -60,12 +61,12 @@ export function CreateChatRoomModal({
 
   const handleCreateRoom = async () => {
     if (!roomName.trim()) {
-      Alert.alert('알림', '채팅방 이름을 입력하세요');
+      Alert.alert("알림", "채팅방 이름을 입력하세요");
       return;
     }
 
     if (selectedFriends.length === 0) {
-      Alert.alert('알림', '최소 한 명의 친구를 선택하세요');
+      Alert.alert("알림", "최소 한 명의 친구를 선택하세요");
       return;
     }
 
@@ -73,7 +74,7 @@ export function CreateChatRoomModal({
       setLoading(true);
       const currentUserId = await Auth.getUserId();
       if (!currentUserId) {
-        Alert.alert('오류', '사용자 정보를 찾을 수 없습니다');
+        Alert.alert("오류", "사용자 정보를 찾을 수 없습니다");
         return;
       }
 
@@ -81,14 +82,14 @@ export function CreateChatRoomModal({
 
       await chatApi.createRoom(roomName, participantIds);
 
-      Alert.alert('성공', '채팅방이 생성되었습니다!');
-      setRoomName('');
+      Alert.alert("성공", "채팅방이 생성되었습니다!");
+      setRoomName("");
       setSelectedFriends([]);
       onClose();
       onRoomCreated?.();
     } catch (error) {
-      console.error('Failed to create room:', error);
-      Alert.alert('오류', '채팅방 생성에 실패했습니다');
+      console.error("Failed to create room:", error);
+      Alert.alert("오류", "채팅방 생성에 실패했습니다");
     } finally {
       setLoading(false);
     }
@@ -199,71 +200,70 @@ export function CreateChatRoomModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 24,
-    width: '90%',
-    maxHeight: '80%',
+    width: "90%",
+    maxHeight: "80%",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
-    color: '#000000',
+    color: "#000000",
   },
   inputContainer: {
     marginBottom: 20,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 8,
-    color: '#000000',
+    color: "#000000",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
   },
   friendsContainer: {
-    flex: 1,
     marginBottom: 20,
   },
   friendsList: {
     maxHeight: 300,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
     borderRadius: 8,
   },
   friendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: "#F3F4F6",
   },
   checkbox: {
     width: 20,
     height: 20,
     borderWidth: 2,
-    borderColor: '#3B82F6',
+    borderColor: "#3B82F6",
     borderRadius: 4,
     marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   checkboxChecked: {
     width: 12,
     height: 12,
-    backgroundColor: '#3B82F6',
+    backgroundColor: "#3B82F6",
     borderRadius: 2,
   },
   friendInfo: {
@@ -271,57 +271,57 @@ const styles = StyleSheet.create({
   },
   friendName: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
+    fontWeight: "500",
+    color: "#000000",
   },
   friendEmail: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
     marginTop: 2,
   },
   loadingContainer: {
     padding: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 12,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   emptyContainer: {
     padding: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
-    color: '#6B7280',
-    textAlign: 'center',
+    color: "#6B7280",
+    textAlign: "center",
   },
   buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
+    flexDirection: "row",
   },
   button: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
+    marginRight: 12,
   },
   cancelButtonText: {
-    color: '#000000',
+    color: "#000000",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   createButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: "#3B82F6",
   },
   createButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   buttonDisabled: {
     opacity: 0.5,

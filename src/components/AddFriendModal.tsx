@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,10 +10,10 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-} from 'react-native';
-import { userApi } from '../utils/userApi';
-import type { User } from '../types';
-import { Colors } from '@/constants/colors';
+} from "react-native";
+import { userApi } from "../utils/userApi";
+import type { User } from "../types";
+import { Colors } from "@/constants/colors";
 
 interface AddFriendModalProps {
   visible: boolean;
@@ -26,14 +26,14 @@ export function AddFriendModal({
   onClose,
   onFriendAdded,
 }: AddFriendModalProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
     if (!searchQuery.trim() || searchQuery.length < 2) {
-      Alert.alert('알림', '최소 2글자 이상 입력하세요');
+      Alert.alert("알림", "최소 2글자 이상 입력하세요");
       return;
     }
 
@@ -42,8 +42,8 @@ export function AddFriendModal({
       const data = await userApi.searchUsers(searchQuery);
       setSearchResults(data.users || []);
     } catch (error) {
-      console.error('Failed to search users:', error);
-      Alert.alert('오류', '사용자 검색에 실패했습니다');
+      console.error("Failed to search users:", error);
+      Alert.alert("오류", "사용자 검색에 실패했습니다");
     } finally {
       setSearching(false);
     }
@@ -53,14 +53,17 @@ export function AddFriendModal({
     try {
       setLoading(true);
       await userApi.addFriend(friendId);
-      Alert.alert('성공', '친구가 추가되었습니다!');
-      setSearchQuery('');
+      Alert.alert("성공", "친구가 추가되었습니다!");
+      setSearchQuery("");
       setSearchResults([]);
       onClose();
       onFriendAdded?.();
     } catch (error) {
-      console.error('Failed to add friend:', error);
-      Alert.alert('오류', error instanceof Error ? error.message : '친구 추가에 실패했습니다');
+      console.error("Failed to add friend:", error);
+      Alert.alert(
+        "오류",
+        error instanceof Error ? error.message : "친구 추가에 실패했습니다"
+      );
     } finally {
       setLoading(false);
     }
@@ -70,7 +73,10 @@ export function AddFriendModal({
     <View style={styles.userItem}>
       {/* User Image */}
       {item.setting?.imageUrl ? (
-        <Image source={{ uri: item.setting.imageUrl }} style={styles.userImage} />
+        <Image
+          source={{ uri: item.setting.imageUrl }}
+          style={styles.userImage}
+        />
       ) : (
         <View style={styles.userImagePlaceholder}>
           <Text style={styles.userImagePlaceholderText}>
@@ -81,10 +87,12 @@ export function AddFriendModal({
 
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userEmail}>{item.email || item.phone || '정보 없음'}</Text>
+        <Text style={styles.userEmail}>
+          {item.email || item.phone || "정보 없음"}
+        </Text>
       </View>
 
-      {item.friendshipStatus === 'accepted' ? (
+      {item.friendshipStatus === "accepted" ? (
         <Text style={styles.alreadyFriendText}>친구</Text>
       ) : (
         <TouchableOpacity
@@ -138,8 +146,8 @@ export function AddFriendModal({
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>
                   {searchQuery.length >= 2
-                    ? '검색 결과가 없습니다'
-                    : '이름, 이메일 또는 전화번호를 입력하세요'}
+                    ? "검색 결과가 없습니다"
+                    : "이름, 이메일 또는 전화번호를 입력하세요"}
                 </Text>
               </View>
             ) : (
@@ -167,29 +175,29 @@ export function AddFriendModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 24,
-    width: '90%',
-    maxHeight: '80%',
+    width: "90%",
+    maxHeight: "80%",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
-    color: '#000000',
+    color: "#000000",
   },
   searchContainer: {
     marginBottom: 16,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -197,29 +205,28 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   searchButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: "#3B82F6",
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   searchButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   resultsContainer: {
-    flex: 1,
     marginBottom: 16,
   },
   usersList: {
     maxHeight: 300,
   },
   userItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
     borderRadius: 8,
     marginBottom: 8,
   },
@@ -234,67 +241,67 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   userImagePlaceholderText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   userInfo: {
     flex: 1,
   },
   userName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: "600",
+    color: "#000000",
   },
   userEmail: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
     marginTop: 2,
   },
   alreadyFriendText: {
     fontSize: 14,
-    color: '#10B981',
-    fontWeight: '500',
+    color: "#10B981",
+    fontWeight: "500",
   },
   addButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: "#3B82F6",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
   },
   addButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   emptyContainer: {
     padding: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
-    color: '#6B7280',
-    textAlign: 'center',
+    color: "#6B7280",
+    textAlign: "center",
     fontSize: 14,
   },
   button: {
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
   },
   cancelButtonText: {
-    color: '#000000',
+    color: "#000000",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   buttonDisabled: {
     opacity: 0.5,
