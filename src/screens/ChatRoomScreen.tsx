@@ -37,6 +37,7 @@ import { ChatSummary } from "../components/ChatSummary";
 import { AudioPlayer } from "../components/AudioPlayer";
 import { Colors } from "@/constants/colors";
 import { chatApi } from "../utils/chatApi";
+import SendIcon from "@/assets/send-icon.svg";
 
 type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
 type ChatRoomNavigationProp = NativeStackNavigationProp<
@@ -61,7 +62,9 @@ export default function ChatRoomScreen() {
 
   // Set navigation title
   useEffect(() => {
-    navigation.setOptions({ title: roomName });
+    navigation.setOptions({
+      title: roomName,
+    });
   }, [navigation, roomName]);
 
   // Load current user
@@ -571,16 +574,18 @@ export default function ChatRoomScreen() {
           scrollEnabled={false}
         />
         <TouchableOpacity
-          style={[
-            styles.sendButton,
-            (!inputMessage.trim() || isLoading) && styles.sendButtonDisabled,
-          ]}
+          style={styles.sendButton}
           onPress={handleSendMessage}
           disabled={!inputMessage.trim() || isLoading}
         >
-          <Image
-            source={require("@/assets/send-icon.svg")}
-            style={styles.sendButtonIcon}
+          <SendIcon
+            width={30}
+            height={30}
+            color={
+              !inputMessage.trim() || isLoading
+                ? Colors.primaryDeactivated
+                : Colors.primary
+            }
           />
         </TouchableOpacity>
       </View>
@@ -654,7 +659,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   senderName: {
-    fontSize: 14,
+    fontSize: 20,
     fontWeight: "600",
     color: "#000000",
     marginBottom: 4,
@@ -676,7 +681,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   messageText: {
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: "400",
     lineHeight: 22,
   },
   myMessageText: {
@@ -697,7 +703,7 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
   readBy: {
-    fontSize: 10,
+    fontSize: 12,
     color: Colors.primary,
   },
   readByContainer: {
@@ -706,7 +712,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   readByCheckmark: {
-    fontSize: 10,
+    fontSize: 12,
     color: Colors.primary,
     marginRight: 2,
   },
@@ -744,7 +750,6 @@ const styles = StyleSheet.create({
   sendButtonIcon: {
     width: 30,
     height: 30,
-    tintColor: Colors.primaryDeactivated,
   },
   // Media styles
   mediaContainer: {
