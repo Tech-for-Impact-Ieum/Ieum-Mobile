@@ -38,4 +38,15 @@ export const chatApi = {
   getQuickReplies: async (roomId: string | number) => {
     return await ApiClient.get(`/chat/rooms/${roomId}/quick-replies`);
   },
+
+  createRoom: async (name: string, participantIds: number[]) => {
+    return await ApiClient.post('/chat/rooms', {
+      name,
+      participantIds,
+    });
+  },
+
+  getFriends: async () => {
+    return await ApiClient.get('/friends');
+  },
 };

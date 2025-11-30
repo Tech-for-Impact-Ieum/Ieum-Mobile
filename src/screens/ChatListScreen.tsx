@@ -3,7 +3,7 @@
  * Adapted from Next.js home page (chat rooms list)
  */
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,66 +12,71 @@ import {
   TextInput,
   StyleSheet,
   RefreshControl,
-} from 'react-native'
-import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { chatApi } from '../utils/chatApi'
-import { Auth } from '../services/auth'
+  Image,
+} from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { chatApi } from "../utils/chatApi";
+import { Auth } from "../services/auth";
 import {
   initSocketClient,
   onNewMessage,
   onMessagesRead,
   onUnreadCountUpdate,
   joinRoom,
-} from '../services/socketClient'
-import type { ChatRoom, UnreadCountUpdateEvent } from '../types'
-import type { RootStackParamList } from '../navigation/AppNavigator'
+} from "../services/socketClient";
+import type { ChatRoom, UnreadCountUpdateEvent } from "../types";
+import type { RootStackParamList } from "../navigation/AppNavigator";
+import { CreateChatRoomModal } from "../components/CreateChatRoomModal";
+import { Plus } from "lucide-react-native";
+import { Colors } from "@/constants/colors";
 
 type ChatListNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  'Main'
->
+  "Main"
+>;
 
 export default function ChatListScreen() {
-  const navigation = useNavigation<ChatListNavigationProp>()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [rooms, setRooms] = useState<ChatRoom[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
+  const navigation = useNavigation<ChatListNavigationProp>();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showCreateRoom, setShowCreateRoom] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      fetchRooms()
-      initializeSocket()
-    }, []),
-  )
+      fetchRooms();
+      initializeSocket();
+    }, [])
+  );
 
   const fetchRooms = async () => {
     try {
-      setLoading(true)
-      const data = await chatApi.getChatRooms()
-      setRooms(data.rooms || [])
+      setLoading(true);
+      const data = await chatApi.getChatRooms();
+      setRooms(data.rooms || []);
 
       // Join all rooms for real-time updates
       for (const room of data.rooms) {
-        joinRoom(room.id)
+        joinRoom(room.id);
       }
     } catch (error) {
-      console.error('Failed to fetch chat rooms:', error)
+      console.error("Failed to fetch chat rooms:", error);
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(false);
+      setRefreshing(false);
     }
-  }
+  };
 
   const initializeSocket = async () => {
-    const token = await Auth.getToken()
+    const token = await Auth.getToken();
     if (token) {
-      initSocketClient(token)
+      initSocketClient(token);
 
       // Listen for new messages
       const unsubscribeNewMessage = onNewMessage((message) => {
-        console.log('📨 New message in room list:', message)
+        console.log("📨 New message in room list:", message);
         setRooms((prev) => {
           const updated = prev.map((room) => {
             if (room.id === message.roomId) {
@@ -86,99 +91,112 @@ export default function ChatListScreen() {
                   createdAt: message.createdAt,
                 },
                 lastMessageAt: message.createdAt,
-              }
+              };
             }
-            return room
-          })
+            return room;
+          });
 
           // Sort by lastMessageAt
           return updated.sort((a, b) => {
             const timeA = new Date(
-              a.lastMessage?.createdAt || a.lastMessageAt || 0,
-            ).getTime()
+              a.lastMessage?.createdAt || a.lastMessageAt || 0
+            ).getTime();
             const timeB = new Date(
-              b.lastMessage?.createdAt || b.lastMessageAt || 0,
-            ).getTime()
-            return timeB - timeA
-          })
-        })
-      })
+              b.lastMessage?.createdAt || b.lastMessageAt || 0
+            ).getTime();
+            return timeB - timeA;
+          });
+        });
+      });
 
       // Listen for messages-read events
       const unsubscribeMessagesRead = onMessagesRead(async (data) => {
-        const currentUserId = await Auth.getUserId()
+        const currentUserId = await Auth.getUserId();
         if (data.userId === currentUserId) {
           setRooms((prev) =>
             prev.map((room) => {
               if (room.id === data.roomId) {
-                return { ...room, unreadCount: 0 }
+                return { ...room, unreadCount: 0 };
               }
-              return room
-            }),
-          )
+              return room;
+            })
+          );
         }
-      })
+      });
 
       // Listen for unread count updates
-      const unsubscribeUnreadCount = onUnreadCountUpdate((data: UnreadCountUpdateEvent) => {
-        console.log('📊 Unread count update:', data)
-        setRooms((prev) =>
-          prev.map((room) => {
-            if (room.id === data.roomId) {
-              return { ...room, unreadCount: data.unreadCount }
-            }
-            return room
-          }),
-        )
-      })
+      const unsubscribeUnreadCount = onUnreadCountUpdate(
+        (data: UnreadCountUpdateEvent) => {
+          console.log("📊 Unread count update:", data);
+          setRooms((prev) =>
+            prev.map((room) => {
+              if (room.id === data.roomId) {
+                return { ...room, unreadCount: data.unreadCount };
+              }
+              return room;
+            })
+          );
+        }
+      );
 
       return () => {
-        unsubscribeNewMessage()
-        unsubscribeMessagesRead()
-        unsubscribeUnreadCount()
-      }
+        unsubscribeNewMessage();
+        unsubscribeMessagesRead();
+        unsubscribeUnreadCount();
+      };
     }
-  }
+  };
 
   const onRefresh = () => {
-    setRefreshing(true)
-    fetchRooms()
-  }
+    setRefreshing(true);
+    fetchRooms();
+  };
 
   const filteredRooms = rooms.filter((room) =>
-    room.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+    room.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const formatTime = (dateString?: string) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / 60000)
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
 
-    if (minutes < 1) return '방금 전'
-    if (minutes < 60) return `${minutes}분 전`
-    const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `${hours}시간 전`
-    const days = Math.floor(hours / 24)
-    if (days < 7) return `${days}일 전`
-    return date.toLocaleDateString('ko-KR')
-  }
+    if (minutes < 1) return "방금 전";
+    if (minutes < 60) return `${minutes}분 전`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}일 전`;
+    return date.toLocaleDateString("ko-KR");
+  };
 
   const renderChatRoom = ({ item }: { item: ChatRoom }) => (
     <TouchableOpacity
       style={styles.roomItem}
       onPress={() =>
-        navigation.navigate('ChatRoom', {
+        navigation.navigate("ChatRoom", {
           roomId: item.id,
           roomName: item.name,
         })
       }
     >
+      {/* Room Image */}
+      {item.imageUrl ? (
+        <Image source={{ uri: item.imageUrl }} style={styles.roomImage} />
+      ) : (
+        <View style={styles.roomImagePlaceholder}>
+          <Text style={styles.roomImagePlaceholderText}>
+            {item.name.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.roomInfo}>
         <Text style={styles.roomName}>{item.name}</Text>
         <Text style={styles.lastMessage} numberOfLines={1}>
-          {item.lastMessage?.text || '메시지 없음'}
+          {item.lastMessage?.text || "메시지 없음"}
         </Text>
       </View>
       <View style={styles.roomMeta}>
@@ -192,7 +210,7 @@ export default function ChatListScreen() {
         )}
       </View>
     </TouchableOpacity>
-  )
+  );
 
   return (
     <View style={styles.container}>
@@ -209,6 +227,19 @@ export default function ChatListScreen() {
         />
       </View>
 
+      {/* Create Room Button */}
+      <View style={styles.createButtonContainer}>
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={() => setShowCreateRoom(true)}
+        >
+          <View style={styles.createButtonIconContainer}>
+            <Plus size={20} color="#FFFFFF" />
+          </View>
+          <Text style={styles.createButtonText}>새 채팅방 만들기</Text>
+        </TouchableOpacity>
+      </View>
+
       <FlatList
         data={filteredRooms}
         renderItem={renderChatRoom}
@@ -220,97 +251,164 @@ export default function ChatListScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>채팅방이 없습니다</Text>
+            <Text style={styles.emptySubText}>
+              위의 버튼을 눌러 채팅방을 만드세요
+            </Text>
           </View>
         }
       />
+
+      <CreateChatRoomModal
+        visible={showCreateRoom}
+        onClose={() => setShowCreateRoom(false)}
+        onRoomCreated={fetchRooms}
+      />
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#FFFFFF",
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontWeight: "bold",
+    color: "#000000",
   },
   searchContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: "#FFFFFF",
   },
   searchInput: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 16,
     fontSize: 16,
+  },
+  createButtonContainer: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderRadius: 16,
+    marginHorizontal: 8,
+    borderColor: "#E5E7EB",
+  },
+  createButton: {
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 8,
+  },
+  createButtonIconContainer: {
+    width: 55,
+    height: 55,
+    borderRadius: 27.5,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  createButtonText: {
+    color: "#000000",
+    fontSize: 24,
+    fontWeight: "500",
   },
   listContent: {
     paddingBottom: 20,
   },
   roomItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: "#F3F4F6",
+    alignItems: "center",
+  },
+  roomImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  roomImagePlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  roomImagePlaceholderText: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "600",
   },
   roomInfo: {
     flex: 1,
   },
   roomName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: 24,
+    fontWeight: "500",
+    color: "#000000",
     marginBottom: 4,
   },
   lastMessage: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 20,
+    fontWeight: "400",
+    color: "#6B7280",
   },
   roomMeta: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
+    alignItems: "flex-end",
+    justifyContent: "center",
   },
   time: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    fontSize: 16,
+    fontWeight: "400",
+    color: "#9CA3AF",
     marginBottom: 4,
   },
   unreadBadge: {
-    backgroundColor: '#EF4444',
-    borderRadius: 12,
+    backgroundColor: "#EF4444",
+    borderRadius: 13.5,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    minWidth: 20,
-    alignItems: 'center',
+    width: 27,
+    height: 27,
+    alignItems: "center",
   },
   unreadText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "400",
   },
   emptyContainer: {
     paddingTop: 60,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: "#9CA3AF",
   },
-})
+  emptySubText: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    marginTop: 8,
+  },
+});
