@@ -211,6 +211,9 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const isDefaultAvatar = user?.setting?.imageUrl?.includes("ui-avatars.com");
+  const shouldShowImage = user?.setting?.imageUrl && !isDefaultAvatar;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -221,9 +224,9 @@ export default function SettingsScreen() {
         {/* User Info Section */}
         <View style={styles.section}>
           <View style={styles.profileInfo}>
-            {user?.setting?.imageUrl ? (
+            {shouldShowImage ? (
               <Image
-                source={{ uri: user.setting.imageUrl }}
+                source={{ uri: user?.setting?.imageUrl }}
                 style={styles.profileImage}
               />
             ) : (
@@ -357,7 +360,7 @@ export default function SettingsScreen() {
               style={{ flexDirection: "row", alignItems: "center", gap: 16 }}
             >
               <View style={{ position: "relative" }}>
-                {imageUri || user?.setting?.imageUrl ? (
+                {imageUri || shouldShowImage ? (
                   <Image
                     source={{ uri: imageUri || user?.setting?.imageUrl || "" }}
                     style={styles.profileImageLarge}
