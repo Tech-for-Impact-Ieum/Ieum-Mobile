@@ -18,7 +18,7 @@ import {
 import { userApi } from "../utils/userApi";
 import type { User } from "../types";
 import { AddFriendModal } from "../components/AddFriendModal";
-import { Plus } from "lucide-react-native";
+import { Plus, User as UserIcon } from "lucide-react-native";
 import { Colors } from "@/constants/colors";
 
 export default function FriendsScreen() {
@@ -84,15 +84,12 @@ export default function FriendsScreen() {
         />
       ) : (
         <View style={styles.friendImagePlaceholder}>
-          <Text style={styles.friendImagePlaceholderText}>
-            {item.name.charAt(0).toUpperCase()}
-          </Text>
+          <UserIcon size={28} color="#000000" />
         </View>
       )}
 
       <View style={styles.friendInfo}>
         <Text style={styles.friendName}>{item.name}</Text>
-        {/* <Text style={styles.friendEmail}>{item.email || '이메일 없음'}</Text> */}
       </View>
       {/* <TouchableOpacity
         style={styles.deleteButton}
@@ -233,10 +230,10 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   friendImagePlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: Colors.primary,
+    width: 55,
+    height: 55,
+    borderRadius: 27.5,
+    backgroundColor: "#0000000A",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
