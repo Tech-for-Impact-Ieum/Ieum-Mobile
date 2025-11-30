@@ -227,7 +227,6 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   summaryText: {
-    flex: 1,
     fontSize: 20,
     fontWeight: "400",
     lineHeight: 22,
