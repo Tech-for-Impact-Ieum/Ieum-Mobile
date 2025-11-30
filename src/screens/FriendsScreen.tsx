@@ -162,8 +162,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 16,
     backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
     alignItems: "center",
   },
   headerTitle: {
