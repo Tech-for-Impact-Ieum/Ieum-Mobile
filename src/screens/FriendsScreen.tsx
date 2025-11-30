@@ -74,32 +74,39 @@ export default function FriendsScreen() {
     friend.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderFriend = ({ item }: { item: User }) => (
-    <View style={styles.friendItem}>
-      {/* Friend Image */}
-      {item.setting?.imageUrl ? (
-        <Image
-          source={{ uri: item.setting.imageUrl }}
-          style={styles.friendImage}
-        />
-      ) : (
-        <View style={styles.friendImagePlaceholder}>
-          <UserIcon size={28} color="#000000" />
+  const renderFriend = ({ item }: { item: User }) => {
+    // Check if imageUrl is the default UI Avatars URL
+    const isDefaultAvatar = item.setting?.imageUrl?.includes("ui-avatars.com");
+    const shouldShowImage = item.setting?.imageUrl && !isDefaultAvatar;
+
+    return (
+      <View style={styles.friendItem}>
+        {/* Friend Image */}
+        {shouldShowImage ? (
+          <Image
+            source={{ uri: item.setting?.imageUrl }}
+            style={styles.friendImage}
+          />
+        ) : (
+          <View style={styles.friendImagePlaceholder}>
+            <UserIcon size={28} color="#000000" />
+          </View>
+        )}
+
+        <View style={styles.friendInfo}>
+          <Text style={styles.friendName}>{item.name}</Text>
         </View>
-      )}
-
-      <View style={styles.friendInfo}>
-        <Text style={styles.friendName}>{item.name}</Text>
+        {/* <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => removeFriend(item.id)}
+        >
+          <Text style={styles.deleteButtonText}>삭제</Text>
+        </TouchableOpacity> */}
       </View>
-      {/* <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => removeFriend(item.id)}
-      >
-        <Text style={styles.deleteButtonText}>삭제</Text>
-      </TouchableOpacity> */}
-    </View>
-  );
+    );
+  };
 
+  console.log("Rendering FriendsScreen with friends:", friends);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -244,7 +251,7 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 27.5,
-    backgroundColor: "#0000000A",
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
