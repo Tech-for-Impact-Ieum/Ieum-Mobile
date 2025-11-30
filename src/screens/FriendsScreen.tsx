@@ -164,10 +164,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
+    fontSize: 30,
+    fontWeight: "700",
     color: "#000000",
   },
   searchContainer: {
