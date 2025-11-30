@@ -38,7 +38,7 @@ import { AudioPlayer } from "../components/AudioPlayer";
 import { Colors } from "@/constants/colors";
 import { chatApi } from "../utils/chatApi";
 import SendIcon from "@/assets/send-icon.svg";
-import { Volume2 } from "lucide-react-native";
+import { UserIcon, Volume2 } from "lucide-react-native";
 import * as Speech from "expo-speech";
 
 type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
@@ -270,6 +270,10 @@ export default function ChatRoomScreen() {
     const hasMedia = item.media && item.media.length > 0;
     const hasText = item.text && item.text.trim().length > 0;
 
+    console.log("Rendering message:", item.senderName, item.senderImageUrl);
+    const isDefaultAvatar = item.senderImageUrl?.includes("ui-avatars.com");
+    const shouldShowImage = item.senderImageUrl && !isDefaultAvatar;
+
     return (
       <View
         style={[
@@ -282,16 +286,14 @@ export default function ChatRoomScreen() {
         {!isMyMessage ? (
           <View style={styles.messageWithProfileContainer}>
             {/* Profile Image */}
-            {item.senderImageUrl ? (
+            {shouldShowImage ? (
               <Image
                 source={{ uri: item.senderImageUrl }}
                 style={styles.profileImage}
               />
             ) : (
               <View style={styles.profileImagePlaceholder}>
-                <Text style={styles.profileImagePlaceholderText}>
-                  {item.senderName.charAt(0).toUpperCase()}
-                </Text>
+                <UserIcon size={28} color="#000000" />
               </View>
             )}
 
@@ -665,13 +667,12 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   profileImagePlaceholder: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.primary,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 8,
   },
   profileImagePlaceholderText: {
     color: "#FFFFFF",
