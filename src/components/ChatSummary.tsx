@@ -124,7 +124,7 @@ export function ChatSummary({
       {/* Loading State */}
       {isLoading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#9333EA" />
+          <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>요약을 불러오는 중...</Text>
         </View>
       )}
