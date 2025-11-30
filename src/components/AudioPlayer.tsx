@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 import {
   View,
   Text,
@@ -6,17 +6,18 @@ import {
   StyleSheet,
   ActivityIndicator,
   ViewStyle,
-} from 'react-native'
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio'
-import { Play, Pause } from 'lucide-react-native'
+} from "react-native";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { Play, Pause } from "lucide-react-native";
+import { Colors } from "@/constants/colors";
 
 interface AudioPlayerProps {
-  src: string
-  duration?: number
-  fileName?: string
-  style?: ViewStyle
-  variant?: 'compact' | 'full'
-  isMyMessage?: boolean
+  src: string;
+  duration?: number;
+  fileName?: string;
+  style?: ViewStyle;
+  variant?: "compact" | "full";
+  isMyMessage?: boolean;
 }
 
 export function AudioPlayer({
@@ -24,31 +25,32 @@ export function AudioPlayer({
   duration: initialDuration,
   fileName,
   style,
-  variant = 'compact',
+  variant = "compact",
   isMyMessage = false,
 }: AudioPlayerProps) {
-  const player = useAudioPlayer(src)
-  const status = useAudioPlayerStatus(player)
+  const player = useAudioPlayer(src);
+  const status = useAudioPlayerStatus(player);
 
   const handlePlayPause = () => {
-    console.log("Audio Player Status:", status)
+    console.log("Audio Player Status:", status);
     if (status.playing) {
-      player.pause()
+      player.pause();
     } else {
       if (status.currentTime >= status.duration) {
-        player.seekTo(0)
+        player.seekTo(0);
       }
-      player.play()
+      player.play();
     }
-  }
+  };
 
   const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${minutes}:${secs.toString().padStart(2, '0')}`
-  }
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  };
 
-  const progress = status.duration > 0 ? (status.currentTime / status.duration) * 100 : 0
+  const progress =
+    status.duration > 0 ? (status.currentTime / status.duration) * 100 : 0;
 
   return (
     <View
@@ -71,7 +73,12 @@ export function AudioPlayer({
         ) : status.playing ? (
           <Pause size={20} color="#FFFFFF" fill="#FFFFFF" />
         ) : (
-          <Play size={20} color="#FFFFFF" fill="#FFFFFF" style={{ marginLeft: 2 }} />
+          <Play
+            size={20}
+            color="#FFFFFF"
+            fill="#FFFFFF"
+            style={{ marginLeft: 2 }}
+          />
         )}
       </TouchableOpacity>
 
@@ -88,20 +95,22 @@ export function AudioPlayer({
             />
           </View>
         </View>
-        
+
         <View style={styles.timeContainer}>
           <Text style={styles.timeText}>{formatTime(status.currentTime)}</Text>
-          <Text style={styles.timeText}>{formatTime(status.duration || initialDuration || 0)}</Text>
+          <Text style={styles.timeText}>
+            {formatTime(status.duration || initialDuration || 0)}
+          </Text>
         </View>
       </View>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     borderRadius: 12,
     gap: 12,
@@ -109,56 +118,56 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
   myMessageContainer: {
-    backgroundColor: '#FEE500', // Kakao yellow
+    backgroundColor: "#FEE500", // Kakao yellow
   },
   otherMessageContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.messageBubble,
   },
   playButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   myPlayButton: {
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: "rgba(0,0,0,0.1)",
   },
   otherPlayButton: {
-    backgroundColor: '#3B82F6', // Blue for other's messages
+    backgroundColor: Colors.primary, // Blue for other's messages
   },
   infoContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     gap: 6,
   },
   progressBarContainer: {
     height: 12,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   progressBarBackground: {
     height: 4,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: "rgba(0,0,0,0.1)",
     borderRadius: 2,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressBarFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 2,
   },
   myProgressFill: {
-    backgroundColor: '#000000',
+    backgroundColor: "#000000",
   },
   otherProgressFill: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: "#3B82F6",
   },
   timeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   timeText: {
     fontSize: 11,
-    color: '#6B7280',
-    fontVariant: ['tabular-nums'],
+    color: "#6B7280",
+    fontVariant: ["tabular-nums"],
   },
-})
+});
