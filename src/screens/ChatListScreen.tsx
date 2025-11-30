@@ -172,47 +172,53 @@ export default function ChatListScreen() {
     return date.toLocaleDateString("ko-KR");
   };
 
-  const renderChatRoom = ({ item }: { item: ChatRoom }) => (
-    <TouchableOpacity
-      style={styles.roomItem}
-      onPress={() =>
-        navigation.navigate("ChatRoom", {
-          roomId: item.id,
-          roomName: item.name,
-        })
-      }
-    >
-      {/* Room Image */}
-      {item.imageUrl ? (
-        <Image source={{ uri: item.imageUrl }} style={styles.roomImage} />
-      ) : (
-        <View style={styles.roomImagePlaceholder}>
-          {item.roomType === "direct" ? (
-            <User size={28} color="#000000" />
-          ) : (
-            <Users size={28} color="#000000" />
-          )}
-        </View>
-      )}
+  const renderChatRoom = ({ item }: { item: ChatRoom }) => {
+    // Check if imageUrl is the default UI Avatars URL
+    const isDefaultAvatar = item.imageUrl?.includes("ui-avatars.com");
+    const shouldShowImage = item.imageUrl && !isDefaultAvatar;
 
-      <View style={styles.roomInfo}>
-        <Text style={styles.roomName}>{item.name}</Text>
-        <Text style={styles.lastMessage} numberOfLines={1}>
-          {item.lastMessage?.text || "메시지 없음"}
-        </Text>
-      </View>
-      <View style={styles.roomMeta}>
-        <Text style={styles.time}>
-          {formatTime(item.lastMessage?.createdAt || item.lastMessageAt)}
-        </Text>
-        {item.unreadCount > 0 && (
-          <View style={styles.unreadBadge}>
-            <Text style={styles.unreadText}>{item.unreadCount}</Text>
+    return (
+      <TouchableOpacity
+        style={styles.roomItem}
+        onPress={() =>
+          navigation.navigate("ChatRoom", {
+            roomId: item.id,
+            roomName: item.name,
+          })
+        }
+      >
+        {/* Room Image */}
+        {shouldShowImage ? (
+          <Image source={{ uri: item.imageUrl }} style={styles.roomImage} />
+        ) : (
+          <View style={styles.roomImagePlaceholder}>
+            {item.roomType === "direct" ? (
+              <User size={28} color="#000000" />
+            ) : (
+              <Users size={28} color="#000000" />
+            )}
           </View>
         )}
-      </View>
-    </TouchableOpacity>
-  );
+
+        <View style={styles.roomInfo}>
+          <Text style={styles.roomName}>{item.name}</Text>
+          <Text style={styles.lastMessage} numberOfLines={1}>
+            {item.lastMessage?.text || "메시지 없음"}
+          </Text>
+        </View>
+        <View style={styles.roomMeta}>
+          <Text style={styles.time}>
+            {formatTime(item.lastMessage?.createdAt || item.lastMessageAt)}
+          </Text>
+          {item.unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadText}>{item.unreadCount}</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -362,7 +368,7 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 27.5,
-    backgroundColor: "#0000000A",
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
