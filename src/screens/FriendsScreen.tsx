@@ -78,6 +78,7 @@ export default function FriendsScreen() {
     // Check if imageUrl is the default UI Avatars URL
     const isDefaultAvatar = item.setting?.imageUrl?.includes("ui-avatars.com");
     const shouldShowImage = item.setting?.imageUrl && !isDefaultAvatar;
+    const nickname = item.setting?.nickname || item.name;
 
     return (
       <View style={styles.friendItem}>
@@ -94,7 +95,7 @@ export default function FriendsScreen() {
         )}
 
         <View style={styles.friendInfo}>
-          <Text style={styles.friendName}>{item.name}</Text>
+          <Text style={styles.friendName}>{nickname}</Text>
         </View>
         {/* <TouchableOpacity
           style={styles.deleteButton}
