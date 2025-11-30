@@ -28,7 +28,7 @@ import {
 import type { ChatRoom, UnreadCountUpdateEvent } from "../types";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import { CreateChatRoomModal } from "../components/CreateChatRoomModal";
-import { Plus } from "lucide-react-native";
+import { Plus, User, Users } from "lucide-react-native";
 import { Colors } from "@/constants/colors";
 
 type ChatListNavigationProp = NativeStackNavigationProp<
@@ -187,9 +187,11 @@ export default function ChatListScreen() {
         <Image source={{ uri: item.imageUrl }} style={styles.roomImage} />
       ) : (
         <View style={styles.roomImagePlaceholder}>
-          <Text style={styles.roomImagePlaceholderText}>
-            {item.name.charAt(0).toUpperCase()}
-          </Text>
+          {item.roomType === "direct" ? (
+            <User size={28} color="#000000" />
+          ) : (
+            <Users size={28} color="#000000" />
+          )}
         </View>
       )}
 
@@ -349,7 +351,7 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 27.5,
-    backgroundColor: Colors.primary,
+    backgroundColor: "#0000000A",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
