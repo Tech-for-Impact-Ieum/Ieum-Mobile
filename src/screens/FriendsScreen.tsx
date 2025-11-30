@@ -18,7 +18,7 @@ import {
 import { userApi } from "../utils/userApi";
 import type { User } from "../types";
 import { AddFriendModal } from "../components/AddFriendModal";
-import { Plus, User as UserIcon } from "lucide-react-native";
+import { Plus, User as UserIcon, Search } from "lucide-react-native";
 import { Colors } from "@/constants/colors";
 
 export default function FriendsScreen() {
@@ -107,12 +107,15 @@ export default function FriendsScreen() {
       </View>
 
       <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="검색"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+        <View style={styles.searchInputWrapper}>
+          <Search size={20} color="#9CA3AF" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="검색"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
       </View>
 
       {/* Add Friend Button */}
@@ -174,12 +177,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: "#FFFFFF",
   },
-  searchInput: {
+  searchInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#F3F4F6",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     borderRadius: 16,
-    fontSize: 16,
+    paddingHorizontal: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 10,
+    fontSize: 17,
+    color: "#8E8E93",
   },
   addButtonContainer: {
     backgroundColor: "#FFFFFF",

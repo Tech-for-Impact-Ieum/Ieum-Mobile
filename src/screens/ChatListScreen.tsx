@@ -28,7 +28,7 @@ import {
 import type { ChatRoom, UnreadCountUpdateEvent } from "../types";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import { CreateChatRoomModal } from "../components/CreateChatRoomModal";
-import { Plus, User, Users } from "lucide-react-native";
+import { Plus, User, Users, Search } from "lucide-react-native";
 import { Colors } from "@/constants/colors";
 
 type ChatListNavigationProp = NativeStackNavigationProp<
@@ -221,12 +221,15 @@ export default function ChatListScreen() {
       </View>
 
       <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="검색"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+        <View style={styles.searchInputWrapper}>
+          <Search size={20} color="#9CA3AF" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="검색"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
       </View>
 
       {/* Create Room Button */}
@@ -291,12 +294,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: "#FFFFFF",
   },
-  searchInput: {
+  searchInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#F3F4F6",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     borderRadius: 16,
-    fontSize: 16,
+    paddingHorizontal: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 10,
+    fontSize: 17,
+    color: "#8E8E93",
   },
   createButtonContainer: {
     backgroundColor: "#FFFFFF",
