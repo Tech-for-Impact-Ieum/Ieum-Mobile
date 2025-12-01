@@ -155,3 +155,9 @@ For backend:
 
 - **API Server**: REST API for data operations (default: port 4000)
 - **Socket.io Server**: WebSocket for real-time messaging (default: port 4001)
+
+## 관련 프로젝트
+- **Web-based frontend (version 0.0.1)**: https://github.com/Tech-for-Impact-Ieum/Ieum
+- **App-based frontend (version 1.0.0)**: https://github.com/Tech-for-Impact-Ieum/Ieum-Mobile
+- **Server**: https://github.com/Tech-for-Impact-Ieum/Ieum-backend
+- **Figma**:
