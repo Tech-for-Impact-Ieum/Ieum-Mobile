@@ -1,27 +1,37 @@
-# Ieum Mobile - React Native App
+# 이음
 
-React Native mobile application for the Ieum chat platform, converted from the Next.js web application.
+**이음**은 발달장애청년들이 쉽게 온라인으로 소통하도록 돕는 솔루션입니다.
 
-## Features
+## 팀 소개
 
-- Real-time messaging with Socket.io
-- Friends management
-- Group and direct messaging
-- Media sharing (images, videos, audio, files)
-- Push notifications
-- Cross-platform (iOS & Android)
+- 김정우 (팀장) - KAIST 전산학부 24학번
+- 안시현 - KAIST 전기및전자공학부 20학번
+- 이리아 - KAIST 전산학부 21학번
+- 손주호 - KAIST 산업및시스템공학과 24학번
+- 정다호 - KAIST 전산학부 17학번
 
-## Prerequisites
+<img width="543" height="339" alt="image" src="https://github.com/user-attachments/assets/0035bf57-0f44-4031-b1e4-1003a66446af" />
 
-- Node.js (v18 or higher)
-- npm or yarn
-- iOS: Xcode (for iOS development)
-- Android: Android Studio and Android SDK (for Android development)
-- Expo CLI (installed automatically)
+## 프로젝트 개요
 
-## Installation
+### 문제 정의
+
+### 우리의 해결책
+
+## 프로젝트 결과
+
+### 데모 영상
+
+### 특징 및 장점
+
+## 기대 효과
+
+## 설치 및 실행 방법
+
+### Installation
 
 1. **Clone the repository** (if not already done):
+
    ```bash
    cd /Users/dho/Kaist/2025_fall/TechForImpact/Ieum-Mobile
    ```
@@ -31,36 +41,75 @@ React Native mobile application for the Ieum chat platform, converted from the N
    npm install
    ```
 
-## Running the App
-
-### Development Mode
+### How to run (development mode)
 
 Start the Expo development server:
+
 ```bash
 npm start
 ```
 
 This will open Expo DevTools in your browser. From there you can:
+
 - Press `i` to open iOS Simulator
 - Press `a` to open Android Emulator
 - Scan the QR code with Expo Go app on your physical device
 
-### Run on iOS Simulator:
+**Run on iOS Simulator:**
+
 ```bash
 npm run ios
 ```
 
-### Run on Android Emulator:
+**Run on Android Emulator:**
+
 ```bash
 npm run android
 ```
 
-### Run on Web (for testing):
+**Run on Web (for testing):**
+
 ```bash
 npm run web
 ```
 
-## Project Structure
+### How to build for production
+
+**iOS**
+
+1. Configure app.json with your bundle identifier
+2. Build the app:
+   ```bash
+   eas build --platform ios
+   ```
+3. Submit to App Store:
+   ```bash
+   eas submit --platform ios
+   ```
+
+**Android**
+
+1. Configure app.json with your package name
+2. Build the app:
+   ```bash
+   eas build --platform android
+   ```
+3. Submit to Google Play:
+   ```bash
+   eas submit --platform android
+   ```
+
+**Note**: You'll need an Expo account to use EAS Build. Run `eas login` first.
+
+## 개발 환경
+
+- Node.js (v18 or higher)
+- npm or yarn
+- iOS: Xcode (for iOS development)
+- Android: Android Studio and Android SDK (for Android development)
+- Expo CLI (installed automatically)
+
+### Project Structure
 
 ```
 Ieum-Mobile/
@@ -88,7 +137,9 @@ Ieum-Mobile/
 └── .env                 # Environment variables (create from .env.example)
 ```
 
-## Key Technologies
+### Key Technologies
+
+For frontend:
 
 - **React Native**: Cross-platform mobile framework
 - **Expo**: Development platform and tools
@@ -100,82 +151,7 @@ Ieum-Mobile/
 - **AsyncStorage**: Local data persistence
 - **Lucide React Native**: Icon library
 
-## Backend Connection
+For backend:
 
-The app connects to the existing Ieum backend:
 - **API Server**: REST API for data operations (default: port 4000)
 - **Socket.io Server**: WebSocket for real-time messaging (default: port 4001)
-
-Make sure the backend servers are running before testing the app.
-
-## Building for Production
-
-### iOS
-
-1. Configure app.json with your bundle identifier
-2. Build the app:
-   ```bash
-   eas build --platform ios
-   ```
-3. Submit to App Store:
-   ```bash
-   eas submit --platform ios
-   ```
-
-### Android
-
-1. Configure app.json with your package name
-2. Build the app:
-   ```bash
-   eas build --platform android
-   ```
-3. Submit to Google Play:
-   ```bash
-   eas submit --platform android
-   ```
-
-**Note**: You'll need an Expo account to use EAS Build. Run `eas login` first.
-
-## Testing
-
-- Test on iOS Simulator for iOS-specific features
-- Test on Android Emulator for Android-specific features
-- Test on physical devices for best performance testing
-- Test real-time messaging with multiple devices
-
-## Common Issues
-
-### Cannot connect to backend
-
-- Make sure you're using your computer's local IP address in `.env`, not `localhost`
-- Ensure the backend servers are running
-- Check firewall settings
-
-### Socket.io connection fails
-
-- Verify `EXPO_PUBLIC_SOCKET_URL` is correct
-- Check that the Socket.io server is accessible from your device/emulator
-- Look for Socket connection logs in the console
-
-### Build errors
-
-- Clear cache: `npx expo start -c`
-- Reinstall dependencies: `rm -rf node_modules && npm install`
-- Clear watchman: `watchman watch-del-all`
-
-## Development Tips
-
-1. **Hot Reload**: Changes to code will automatically reload the app
-2. **Developer Menu**: 
-   - iOS: Cmd+D
-   - Android: Cmd+M or shake device
-3. **Logs**: Use `console.log()` - they appear in the terminal
-4. **Debugging**: Use React Native Debugger or Flipper
-
-## Contributing
-
-This app is part of the Tech for Impact 2025F project - Team 이음 (Ieum).
-
-## License
-
-[Your License Here]
