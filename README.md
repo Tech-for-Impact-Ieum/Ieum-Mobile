@@ -104,10 +104,10 @@ npm run web
 ## 개발 환경
 
 - Node.js (v18 or higher)
-- npm or yarn
+- npm
 - iOS: Xcode (for iOS development)
 - Android: Android Studio and Android SDK (for Android development)
-- Expo CLI (installed automatically)
+- Expo CLI
 
 ### Project Structure
 
