@@ -303,7 +303,7 @@ export default function ChatRoomScreen() {
                 style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
               >
                 <Text style={styles.senderName}>
-                  {item.senderNickname || item.senderName}
+                  {item.senderNickName || item.senderName}
                 </Text>
                 <TouchableOpacity onPress={() => handleTTSPress(item)}>
                   <Volume2

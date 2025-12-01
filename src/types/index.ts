@@ -61,7 +61,7 @@ export interface Message {
   roomId: number; // MySQL Room.id (number)
   senderId: number;
   senderName: string;
-  senderNickname?: string;
+  senderNickName?: string;
   senderImageUrl?: string;
   text?: string;
   media: MediaItem[];
