@@ -4,13 +4,17 @@
 
 ## 팀 소개
 
-- 김정우 (팀장) - KAIST 전산학부 24학번
-- 안시현 - KAIST 전기및전자공학부 20학번
-- 이리아 - KAIST 전산학부 21학번
-- 손주호 - KAIST 산업및시스템공학과 24학번
-- 정다호 - KAIST 전산학부 17학번
-
 <img width="543" height="339" alt="image" src="https://github.com/user-attachments/assets/0035bf57-0f44-4031-b1e4-1003a66446af" />
+
+
+| 이름    | 소개                       | Email                     | GitHub ID   | 역할           |
+|---------|----------------------------|----------------------------|-------------|----------------|
+| 김정우   | KAIST 전산학부 24학번        | placeholder                | placeholder | 팀장           |
+| 안시현   | KAIST 전기및전자공학부 20학번 | sihyun.ahn@kaist.ac.kr    | sihyun-ahn | Frontend       |
+| 이리아   | KAIST 전산학부 21학번        | placeholder                | placeholder | UI/UX Design   |
+| 손주호   | KAIST 산업및시스템공학과 24학번 | placeholder                | placeholder | Backend        |
+| 정다호   | KAIST 전산학부 17학번        | placeholder                | placeholder | Full Stack     |
+
 
 ## 프로젝트 개요
 
