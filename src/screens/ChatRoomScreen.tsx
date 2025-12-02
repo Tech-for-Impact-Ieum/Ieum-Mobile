@@ -169,7 +169,13 @@ export default function ChatRoomScreen() {
     };
 
     initSocket();
-  }, [roomId, currentUserId, chatRoom?.id, handleNewMessageEvent, handleMessagesReadEvent]);
+  }, [
+    roomId,
+    currentUserId,
+    chatRoom?.id,
+    handleNewMessageEvent,
+    handleMessagesReadEvent,
+  ]);
 
   const sendMessageToAPI = async (text: string, media: MediaItem[] = []) => {
     if (!currentUserId) return;
