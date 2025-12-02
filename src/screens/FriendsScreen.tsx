@@ -9,17 +9,18 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
-  Alert,
   RefreshControl,
   Image,
 } from "react-native";
 import { userApi } from "../utils/userApi";
 import type { User } from "../types";
 import { AddFriendModal } from "../components/AddFriendModal";
-import { Plus, User as UserIcon, Search } from "lucide-react-native";
+import { Plus, User as UserIcon } from "lucide-react-native";
 import { Colors } from "@/constants/colors";
+import { SearchBar } from "@/components/SearchBar";
+
+const AVATAR_SIZE = 55;
 
 export default function FriendsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,26 +46,6 @@ export default function FriendsScreen() {
     }
   };
 
-  const removeFriend = async (friendId: number) => {
-    Alert.alert("친구 삭제", "정말 친구를 삭제하시겠습니까?", [
-      { text: "취소", style: "cancel" },
-      {
-        text: "삭제",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await userApi.removeFriend(friendId);
-            Alert.alert("성공", "친구가 삭제되었습니다");
-            fetchFriends();
-          } catch (error) {
-            console.error("Failed to remove friend:", error);
-            Alert.alert("오류", "친구 삭제에 실패했습니다");
-          }
-        },
-      },
-    ]);
-  };
-
   const onRefresh = () => {
     setRefreshing(true);
     fetchFriends();
@@ -74,35 +55,35 @@ export default function FriendsScreen() {
     friend.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const renderAvatar = (user: User) => {
+    const isDefaultAvatar = user.setting?.imageUrl?.includes("ui-avatars.com");
+    const hasCustomImage = user.setting?.imageUrl && !isDefaultAvatar;
+
+    if (hasCustomImage) {
+      return (
+        <Image
+          source={{ uri: user.setting?.imageUrl }}
+          style={styles.friendImage}
+        />
+      );
+    }
+
+    return (
+      <View style={styles.friendImagePlaceholder}>
+        <UserIcon size={28} color="#000000" />
+      </View>
+    );
+  };
+
   const renderFriend = ({ item }: { item: User }) => {
-    // Check if imageUrl is the default UI Avatars URL
-    const isDefaultAvatar = item.setting?.imageUrl?.includes("ui-avatars.com");
-    const shouldShowImage = item.setting?.imageUrl && !isDefaultAvatar;
-    const nickname = item.setting?.nickname || item.name;
+    const displayName = item.setting?.nickname || item.name;
 
     return (
       <View style={styles.friendItem}>
-        {/* Friend Image */}
-        {shouldShowImage ? (
-          <Image
-            source={{ uri: item.setting?.imageUrl }}
-            style={styles.friendImage}
-          />
-        ) : (
-          <View style={styles.friendImagePlaceholder}>
-            <UserIcon size={28} color="#000000" />
-          </View>
-        )}
-
+        {renderAvatar(item)}
         <View style={styles.friendInfo}>
-          <Text style={styles.friendName}>{nickname}</Text>
+          <Text style={styles.friendName}>{displayName}</Text>
         </View>
-        {/* <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => removeFriend(item.id)}
-        >
-          <Text style={styles.deleteButtonText}>삭제</Text>
-        </TouchableOpacity> */}
       </View>
     );
   };
@@ -113,17 +94,7 @@ export default function FriendsScreen() {
         <Text style={styles.headerTitle}>친구</Text>
       </View>
 
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputWrapper}>
-          <Search size={20} color="#9CA3AF" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="검색"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-      </View>
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
       {/* Add Friend Button */}
       <View style={styles.addButtonContainer}>
@@ -179,27 +150,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#000000",
   },
-  searchContainer: {
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
-  },
-  searchInputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F3F4F6",
-    borderRadius: 16,
-    paddingHorizontal: 16,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 10,
-    fontSize: 17,
-    color: "#8E8E93",
-  },
   addButtonContainer: {
     backgroundColor: "#FFFFFF",
     marginHorizontal: 10,
@@ -217,9 +167,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   addButtonIconContainer: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
     backgroundColor: Colors.primary,
     justifyContent: "center",
     alignItems: "center",
@@ -242,24 +192,19 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F3F4F6",
   },
   friendImage: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
     marginRight: 12,
   },
   friendImagePlaceholder: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
     backgroundColor: "rgba(0, 0, 0, 0.04)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
-  },
-  friendImagePlaceholderText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "600",
   },
   friendInfo: {
     flex: 1,
@@ -269,22 +214,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000000",
     marginBottom: 4,
-  },
-  friendEmail: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  deleteButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#EF4444",
-  },
-  deleteButtonText: {
-    color: "#EF4444",
-    fontSize: 16,
-    fontWeight: "600",
   },
   emptyContainer: {
     paddingTop: 60,

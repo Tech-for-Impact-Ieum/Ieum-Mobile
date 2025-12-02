@@ -3,13 +3,12 @@
  * Adapted from Next.js home page (chat rooms list)
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
   RefreshControl,
   Image,
@@ -28,13 +27,26 @@ import {
 import type { ChatRoom, UnreadCountUpdateEvent } from "../types";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import { CreateChatRoomModal } from "../components/CreateChatRoomModal";
-import { Plus, User, Users, Search } from "lucide-react-native";
+import { Plus } from "lucide-react-native";
 import { Colors } from "@/constants/colors";
+import { SearchBar } from "@/components/SearchBar";
+import {
+  DefaultGroupProfile,
+  DefaultUserProfile,
+} from "@/components/DefaultProfile";
 
 type ChatListNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Main"
 >;
+
+const AVATAR_SIZE = 55;
+const TIME_INTERVALS = {
+  MINUTE: 60000,
+  HOUR: 3600000,
+  DAY: 86400000,
+  WEEK: 604800000,
+} as const;
 
 export default function ChatListScreen() {
   const navigation = useNavigation<ChatListNavigationProp>();
@@ -69,75 +81,70 @@ export default function ChatListScreen() {
     }
   };
 
+  const sortRoomsByLastMessage = (rooms: ChatRoom[]) => {
+    return rooms.sort((a, b) => {
+      const timeA = new Date(
+        a.lastMessage?.createdAt || a.lastMessageAt || 0
+      ).getTime();
+      const timeB = new Date(
+        b.lastMessage?.createdAt || b.lastMessageAt || 0
+      ).getTime();
+      return timeB - timeA;
+    });
+  };
+
+  const handleNewMessage = (message: any) => {
+    console.log("📨 New message in room list:", message);
+    setRooms((prev) => {
+      const updated = prev.map((room) => {
+        if (room.id === message.roomId) {
+          return {
+            ...room,
+            unreadCount: room.unreadCount + 1,
+            lastMessage: {
+              id: message.id,
+              text: message.text,
+              senderId: message.senderId,
+              senderName: message.senderName,
+              createdAt: message.createdAt,
+            },
+            lastMessageAt: message.createdAt,
+          };
+        }
+        return room;
+      });
+      return sortRoomsByLastMessage(updated);
+    });
+  };
+
+  const handleMessagesRead = async (data: any) => {
+    const currentUserId = await Auth.getUserId();
+    if (data.userId === currentUserId) {
+      setRooms((prev) =>
+        prev.map((room) =>
+          room.id === data.roomId ? { ...room, unreadCount: 0 } : room
+        )
+      );
+    }
+  };
+
+  const handleUnreadCountUpdate = (data: UnreadCountUpdateEvent) => {
+    console.log("📊 Unread count update:", data);
+    setRooms((prev) =>
+      prev.map((room) =>
+        room.id === data.roomId ? { ...room, unreadCount: data.unreadCount } : room
+      )
+    );
+  };
+
   const initializeSocket = async () => {
     const token = await Auth.getToken();
     if (token) {
       initSocketClient(token);
 
-      // Listen for new messages
-      const unsubscribeNewMessage = onNewMessage((message) => {
-        console.log("📨 New message in room list:", message);
-        setRooms((prev) => {
-          const updated = prev.map((room) => {
-            if (room.id === message.roomId) {
-              return {
-                ...room,
-                unreadCount: room.unreadCount + 1,
-                lastMessage: {
-                  id: message.id,
-                  text: message.text,
-                  senderId: message.senderId,
-                  senderName: message.senderName,
-                  createdAt: message.createdAt,
-                },
-                lastMessageAt: message.createdAt,
-              };
-            }
-            return room;
-          });
-
-          // Sort by lastMessageAt
-          return updated.sort((a, b) => {
-            const timeA = new Date(
-              a.lastMessage?.createdAt || a.lastMessageAt || 0
-            ).getTime();
-            const timeB = new Date(
-              b.lastMessage?.createdAt || b.lastMessageAt || 0
-            ).getTime();
-            return timeB - timeA;
-          });
-        });
-      });
-
-      // Listen for messages-read events
-      const unsubscribeMessagesRead = onMessagesRead(async (data) => {
-        const currentUserId = await Auth.getUserId();
-        if (data.userId === currentUserId) {
-          setRooms((prev) =>
-            prev.map((room) => {
-              if (room.id === data.roomId) {
-                return { ...room, unreadCount: 0 };
-              }
-              return room;
-            })
-          );
-        }
-      });
-
-      // Listen for unread count updates
-      const unsubscribeUnreadCount = onUnreadCountUpdate(
-        (data: UnreadCountUpdateEvent) => {
-          console.log("📊 Unread count update:", data);
-          setRooms((prev) =>
-            prev.map((room) => {
-              if (room.id === data.roomId) {
-                return { ...room, unreadCount: data.unreadCount };
-              }
-              return room;
-            })
-          );
-        }
-      );
+      const unsubscribeNewMessage = onNewMessage(handleNewMessage);
+      const unsubscribeMessagesRead = onMessagesRead(handleMessagesRead);
+      const unsubscribeUnreadCount = onUnreadCountUpdate(handleUnreadCountUpdate);
 
       return () => {
         unsubscribeNewMessage();
@@ -161,22 +168,33 @@ export default function ChatListScreen() {
     const date = new Date(dateString);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
+    const minutes = Math.floor(diff / TIME_INTERVALS.MINUTE);
 
     if (minutes < 1) return "방금 전";
     if (minutes < 60) return `${minutes}분 전`;
-    const hours = Math.floor(minutes / 60);
+    const hours = Math.floor(diff / TIME_INTERVALS.HOUR);
     if (hours < 24) return `${hours}시간 전`;
-    const days = Math.floor(hours / 24);
+    const days = Math.floor(diff / TIME_INTERVALS.DAY);
     if (days < 7) return `${days}일 전`;
     return date.toLocaleDateString("ko-KR");
   };
 
-  const renderChatRoom = ({ item }: { item: ChatRoom }) => {
-    // Check if imageUrl is the default UI Avatars URL
-    const isDefaultAvatar = item.imageUrl?.includes("ui-avatars.com");
-    const shouldShowImage = item.imageUrl && !isDefaultAvatar;
+  const renderRoomAvatar = (room: ChatRoom) => {
+    const isDefaultAvatar = room.imageUrl?.includes("ui-avatars.com");
+    const hasCustomImage = room.imageUrl && !isDefaultAvatar;
 
+    if (hasCustomImage) {
+      return <Image source={{ uri: room.imageUrl }} style={styles.roomImage} />;
+    }
+
+    return room.roomType === "direct" ? (
+      <DefaultUserProfile style={styles.roomImagePlaceholder} />
+    ) : (
+      <DefaultGroupProfile style={styles.roomImagePlaceholder} />
+    );
+  };
+
+  const renderChatRoom = ({ item }: { item: ChatRoom }) => {
     return (
       <TouchableOpacity
         style={styles.roomItem}
@@ -187,18 +205,7 @@ export default function ChatListScreen() {
           })
         }
       >
-        {/* Room Image */}
-        {shouldShowImage ? (
-          <Image source={{ uri: item.imageUrl }} style={styles.roomImage} />
-        ) : (
-          <View style={styles.roomImagePlaceholder}>
-            {item.roomType === "direct" ? (
-              <User size={28} color="#000000" />
-            ) : (
-              <Users size={28} color="#000000" />
-            )}
-          </View>
-        )}
+        {renderRoomAvatar(item)}
 
         <View style={styles.roomInfo}>
           <Text style={styles.roomName}>{item.name}</Text>
@@ -226,17 +233,7 @@ export default function ChatListScreen() {
         <Text style={styles.headerTitle}>채팅</Text>
       </View>
 
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputWrapper}>
-          <Search size={20} color="#9CA3AF" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="검색"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-      </View>
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
       {/* Create Room Button */}
       <View style={styles.createButtonContainer}>
@@ -295,27 +292,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#000000",
   },
-  searchContainer: {
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
-  },
-  searchInputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F3F4F6",
-    borderRadius: 16,
-    paddingHorizontal: 16,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 10,
-    fontSize: 17,
-    color: "#8E8E93",
-  },
   createButtonContainer: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -334,9 +310,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   createButtonIconContainer: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
     backgroundColor: Colors.primary,
     justifyContent: "center",
     alignItems: "center",
@@ -359,24 +335,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   roomImage: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
     marginRight: 12,
   },
   roomImagePlaceholder: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
     backgroundColor: "rgba(0, 0, 0, 0.04)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
-  },
-  roomImagePlaceholderText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "600",
   },
   roomInfo: {
     flex: 1,

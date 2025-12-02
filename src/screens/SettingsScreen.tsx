@@ -54,6 +54,10 @@ type ModalType =
   | "privacy"
   | null;
 
+const PROFILE_IMAGE_SIZE = 120;
+const PROFILE_IMAGE_LARGE = 96;
+const ICON_CONTAINER_SIZE = 55;
+
 export default function SettingsScreen() {
   const navigation = useNavigation<SettingsNavigationProp>();
   const [user, setUser] = useState<User | null>(null);
@@ -161,22 +165,26 @@ export default function SettingsScreen() {
     }
   };
 
+  const getDefaultSettings = (currentSetting?: User["setting"]) => ({
+    nickname: currentSetting?.nickname,
+    imageUrl: currentSetting?.imageUrl,
+    isSpecial: currentSetting?.isSpecial ?? false,
+    isTest: currentSetting?.isTest ?? false,
+    enableNotifications: currentSetting?.enableNotifications ?? false,
+    enableSummary: currentSetting?.enableSummary ?? false,
+  });
+
   const updateSetting = async (setting: Partial<User["setting"]>) => {
     if (!user) return;
 
     setIsUpdating(true);
     try {
-      const response = await ApiClient.patch("/users/me/settings", setting);
+      await ApiClient.patch("/users/me/settings", setting);
 
       const updatedUser = {
         ...user,
         setting: {
-          nickname: user.setting?.nickname,
-          imageUrl: user.setting?.imageUrl,
-          isSpecial: user.setting?.isSpecial ?? false,
-          isTest: user.setting?.isTest ?? false,
-          enableNotifications: user.setting?.enableNotifications ?? false,
-          enableSummary: user.setting?.enableSummary ?? false,
+          ...getDefaultSettings(user.setting),
           ...setting,
         },
       };
@@ -200,7 +208,6 @@ export default function SettingsScreen() {
           try {
             await Auth.logout();
             disconnectSocket();
-            // Navigation will automatically redirect to login
             navigation.replace("Auth" as any);
           } catch (error) {
             console.error("Logout error:", error);
@@ -211,8 +218,55 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const isDefaultAvatar = user?.setting?.imageUrl?.includes("ui-avatars.com");
-  const shouldShowImage = user?.setting?.imageUrl && !isDefaultAvatar;
+  const renderProfileAvatar = (imageUrl?: string, size: "small" | "large" = "small") => {
+    const isDefaultAvatar = imageUrl?.includes("ui-avatars.com");
+    const hasCustomImage = imageUrl && !isDefaultAvatar;
+    const isLarge = size === "large";
+
+    if (hasCustomImage) {
+      return (
+        <Image
+          source={{ uri: imageUrl }}
+          style={isLarge ? styles.profileImageLarge : styles.profileImage}
+        />
+      );
+    }
+
+    return (
+      <View
+        style={
+          isLarge
+            ? styles.profileImageLargePlaceholder
+            : styles.profileImagePlaceholder
+        }
+      >
+        <UserIcon size={isLarge ? 48 : 80} color={isLarge ? "#9CA3AF" : "#000000"} />
+      </View>
+    );
+  };
+
+  const renderSettingItem = (
+    icon: React.ReactNode,
+    label: string,
+    value: string,
+    modalType: ModalType
+  ) => (
+    <TouchableOpacity
+      style={styles.settingItem}
+      onPress={() => handleSettingClick(modalType!)}
+    >
+      <View style={styles.settingLeft}>
+        <View style={styles.iconContainer}>{icon}</View>
+        <View style={styles.settingWithValue}>
+          <Text style={styles.settingLabel}>{label}</Text>
+          <Text style={styles.settingValue}>{value}</Text>
+        </View>
+      </View>
+      <View style={styles.settingRight}>
+        <ChevronRight size={25} color="#9CA3AF" />
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -224,22 +278,11 @@ export default function SettingsScreen() {
         {/* User Info Section */}
         <View style={styles.section}>
           <View style={styles.profileInfo}>
-            {shouldShowImage ? (
-              <Image
-                source={{ uri: user?.setting?.imageUrl }}
-                style={styles.profileImage}
-              />
-            ) : (
-              <View style={styles.profileImagePlaceholder}>
-                <UserIcon size={80} color="#000000" />
-              </View>
-            )}
+            {renderProfileAvatar(user?.setting?.imageUrl)}
             <Text style={styles.userMain}>
               {user?.setting?.nickname || "사용자"}
             </Text>
-            <View
-              style={{ flexDirection: "row", gap: 3, alignItems: "center" }}
-            >
+            <View style={styles.userInfoRow}>
               <Text style={styles.userSub}>{user?.name || "사용자"}</Text>
               <Text style={styles.bulletPoint}>•</Text>
               <Text style={styles.userSub}>{user?.email || ""}</Text>
@@ -262,65 +305,26 @@ export default function SettingsScreen() {
             <ChevronRight size={25} color="#9CA3AF" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => handleSettingClick("notifications")}
-          >
-            <View style={styles.settingLeft}>
-              <View style={styles.iconContainer}>
-                <Bell fill="#000000" size={25} color="#000000" />
-              </View>
-              <View style={styles.settingWithValue}>
-                <Text style={styles.settingLabel}>알림 설정</Text>
-                <Text style={styles.settingValue}>
-                  {user?.setting?.enableNotifications ? "켜짐" : "꺼짐"}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.settingRight}>
-              <ChevronRight size={25} color="#9CA3AF" />
-            </View>
-          </TouchableOpacity>
+          {renderSettingItem(
+            <Bell fill="#000000" size={25} color="#000000" />,
+            "알림 설정",
+            user?.setting?.enableNotifications ? "켜짐" : "꺼짐",
+            "notifications"
+          )}
 
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => handleSettingClick("summary")}
-          >
-            <View style={styles.settingLeft}>
-              <View style={styles.iconContainer}>
-                <MessageSquareText size={25} color="#000000" />
-              </View>
-              <View style={styles.settingWithValue}>
-                <Text style={styles.settingLabel}>요약 기능</Text>
-                <Text style={styles.settingValue}>
-                  {user?.setting?.enableSummary ? "켜짐" : "꺼짐"}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.settingRight}>
-              <ChevronRight size={25} color="#9CA3AF" />
-            </View>
-          </TouchableOpacity>
+          {renderSettingItem(
+            <MessageSquareText size={25} color="#000000" />,
+            "요약 기능",
+            user?.setting?.enableSummary ? "켜짐" : "꺼짐",
+            "summary"
+          )}
 
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => handleSettingClick("special")}
-          >
-            <View style={styles.settingLeft}>
-              <View style={styles.iconContainer}>
-                <Palette size={25} color="#000000" />
-              </View>
-              <View style={styles.settingWithValue}>
-                <Text style={styles.settingLabel}>접근성 모드</Text>
-                <Text style={styles.settingValue}>
-                  {user?.setting?.isSpecial ? "활성화" : "비활성화"}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.settingRight}>
-              <ChevronRight size={25} color="#9CA3AF" />
-            </View>
-          </TouchableOpacity>
+          {renderSettingItem(
+            <Palette size={25} color="#000000" />,
+            "접근성 모드",
+            user?.setting?.isSpecial ? "활성화" : "비활성화",
+            "special"
+          )}
         </View>
 
         {/* Account Section */}
@@ -354,22 +358,11 @@ export default function SettingsScreen() {
       >
         <View style={{ gap: 20 }}>
           {/* Profile Image Section */}
-          <View style={{ gap: 12 }}>
+          <View style={styles.modalSection}>
             <Text style={styles.modalSectionTitle}>프로필 이미지</Text>
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 16 }}
-            >
-              <View style={{ position: "relative" }}>
-                {imageUri || shouldShowImage ? (
-                  <Image
-                    source={{ uri: imageUri || user?.setting?.imageUrl || "" }}
-                    style={styles.profileImageLarge}
-                  />
-                ) : (
-                  <View style={styles.profileImageLargePlaceholder}>
-                    <UserIcon size={48} color="#9CA3AF" />
-                  </View>
-                )}
+            <View style={styles.profileImageRow}>
+              <View style={styles.profileImageContainer}>
+                {renderProfileAvatar(imageUri || user?.setting?.imageUrl, "large")}
                 <TouchableOpacity
                   style={styles.cameraButton}
                   onPress={handleImagePick}
@@ -377,7 +370,7 @@ export default function SettingsScreen() {
                   <Camera size={20} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={styles.profileImageHintContainer}>
                 <Text style={styles.modalHint}>
                   클릭하여 프로필 이미지를 변경하세요
                 </Text>
@@ -389,7 +382,7 @@ export default function SettingsScreen() {
           </View>
 
           {/* Nickname Section */}
-          <View style={{ gap: 12 }}>
+          <View style={styles.modalSection}>
             <Text style={styles.modalSectionTitle}>닉네임</Text>
             <TextInput
               style={styles.input}
@@ -489,27 +482,25 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     paddingHorizontal: 12,
   },
-  profileCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
   profileInfo: {
     gap: 4,
     alignItems: "center",
   },
+  userInfoRow: {
+    flexDirection: "row",
+    gap: 3,
+    alignItems: "center",
+  },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: PROFILE_IMAGE_SIZE,
+    height: PROFILE_IMAGE_SIZE,
+    borderRadius: PROFILE_IMAGE_SIZE / 2,
     marginBottom: 12,
   },
   profileImagePlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: PROFILE_IMAGE_SIZE,
+    height: PROFILE_IMAGE_SIZE,
+    borderRadius: PROFILE_IMAGE_SIZE / 2,
     backgroundColor: "#0000000A",
     justifyContent: "center",
     alignItems: "center",
@@ -550,9 +541,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   iconContainer: {
-    width: 55,
-    height: 55,
-    borderRadius: 27.5,
+    width: ICON_CONTAINER_SIZE,
+    height: ICON_CONTAINER_SIZE,
+    borderRadius: ICON_CONTAINER_SIZE / 2,
     backgroundColor: "#0000000A",
     justifyContent: "center",
     alignItems: "center",
@@ -580,22 +571,35 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
-  // Profile modal styles
+  modalSection: {
+    gap: 12,
+  },
   modalSectionTitle: {
     fontSize: 22,
     fontWeight: "500",
     color: "#000000",
     marginBottom: 4,
   },
+  profileImageRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  profileImageContainer: {
+    position: "relative",
+  },
+  profileImageHintContainer: {
+    flex: 1,
+  },
   profileImageLarge: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: PROFILE_IMAGE_LARGE,
+    height: PROFILE_IMAGE_LARGE,
+    borderRadius: PROFILE_IMAGE_LARGE / 2,
   },
   profileImageLargePlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: PROFILE_IMAGE_LARGE,
+    height: PROFILE_IMAGE_LARGE,
+    borderRadius: PROFILE_IMAGE_LARGE / 2,
     backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
@@ -630,25 +634,6 @@ const styles = StyleSheet.create({
     borderColor: "#D1D5DB",
     borderRadius: 8,
     backgroundColor: "#FFFFFF",
-    color: "#000000",
-  },
-  accountInfoBox: {
-    padding: 16,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 8,
-    gap: 12,
-  },
-  accountInfoTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#000000",
-  },
-  accountInfoLabel: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  accountInfoValue: {
-    fontSize: 14,
     color: "#000000",
   },
   saveButton: {

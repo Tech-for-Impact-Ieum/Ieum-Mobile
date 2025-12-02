@@ -47,6 +47,10 @@ type ChatRoomNavigationProp = NativeStackNavigationProp<
   "ChatRoom"
 >;
 
+const PROFILE_IMAGE_SIZE = 50;
+const MEDIA_MAX_WIDTH = 300;
+const MEDIA_IMAGE_HEIGHT = 200;
+
 export default function ChatRoomScreen() {
   const route = useRoute<ChatRoomRouteProp>();
   const navigation = useNavigation<ChatRoomNavigationProp>();
@@ -112,7 +116,38 @@ export default function ChatRoomScreen() {
     loadMessages();
   }, [roomId, currentUserId]);
 
-  // Initialize socket and join room
+  const handleNewMessageEvent = useCallback(
+    (message: Message) => {
+      if (Number(message.roomId) !== Number(roomId)) return;
+      if (message.senderId === currentUserId) return;
+
+      setMessages((prev) => {
+        if (prev.some((msg) => msg.id === message.id)) return prev;
+        return [...prev, message];
+      });
+    },
+    [roomId, currentUserId]
+  );
+
+  const handleMessagesReadEvent = useCallback((data: any) => {
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id !== data.messageId) return msg;
+
+        const alreadyRead = msg.readBy.some((r) => r.userId === data.userId);
+        if (alreadyRead) return msg;
+
+        return {
+          ...msg,
+          readBy: [
+            ...msg.readBy,
+            { userId: data.userId, readAt: new Date().toISOString() },
+          ],
+        };
+      })
+    );
+  }, []);
+
   useEffect(() => {
     if (!currentUserId || !chatRoom?.id) return;
 
@@ -120,53 +155,21 @@ export default function ChatRoomScreen() {
       const token = await Auth.getToken();
       if (!token) return;
 
-      // Initialize socket
       initSocketClient(token);
       joinRoom(roomId);
 
-      // Listen for new messages
-      const unsubscribe = onNewMessage((message: Message) => {
-        if (Number(message.roomId) !== Number(roomId)) return;
-        if (message.senderId === currentUserId) return; // Skip own messages
-
-        setMessages((prev) => {
-          if (prev.some((msg) => msg.id === message.id)) return prev;
-          return [...prev, message];
-        });
-      });
-
-      // Listen for messages-read events
-      const unsubscribeMessagesRead = onMessagesRead((data) => {
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.id === data.messageId) {
-              const alreadyRead = msg.readBy.some(
-                (r) => r.userId === data.userId
-              );
-              if (!alreadyRead) {
-                return {
-                  ...msg,
-                  readBy: [
-                    ...msg.readBy,
-                    { userId: data.userId, readAt: new Date().toISOString() },
-                  ],
-                };
-              }
-            }
-            return msg;
-          })
-        );
-      });
+      const unsubscribeNewMessage = onNewMessage(handleNewMessageEvent);
+      const unsubscribeMessagesRead = onMessagesRead(handleMessagesReadEvent);
 
       return () => {
-        unsubscribe();
+        unsubscribeNewMessage();
         unsubscribeMessagesRead();
         leaveRoom(roomId);
       };
     };
 
     initSocket();
-  }, [roomId, currentUserId, chatRoom?.id]);
+  }, [roomId, currentUserId, chatRoom?.id, handleNewMessageEvent, handleMessagesReadEvent]);
 
   const sendMessageToAPI = async (text: string, media: MediaItem[] = []) => {
     if (!currentUserId) return;
@@ -228,7 +231,6 @@ export default function ChatRoomScreen() {
   }, [messages, roomId]);
 
   const readStatus = (message: Message) => {
-    // console.log("numReadBy:", message.readBy);
     const numReadBy = message.readBy.filter(
       (r) => r.userId !== message.senderId
     ).length;
@@ -257,7 +259,6 @@ export default function ChatRoomScreen() {
   };
 
   const handleTTSPress = (message: Message) => {
-    // Only play TTS if the message has text content
     if (message.text && message.text.trim().length > 0) {
       Speech.speak(message.text, {
         language: "ko-KR",
@@ -265,46 +266,144 @@ export default function ChatRoomScreen() {
     }
   };
 
+  const renderProfileAvatar = (imageUrl?: string) => {
+    const isDefaultAvatar = imageUrl?.includes("ui-avatars.com");
+    const hasCustomImage = imageUrl && !isDefaultAvatar;
+
+    if (hasCustomImage) {
+      return <Image source={{ uri: imageUrl }} style={styles.profileImage} />;
+    }
+
+    return (
+      <View style={styles.profileImagePlaceholder}>
+        <UserIcon size={28} color="#000000" />
+      </View>
+    );
+  };
+
+  const renderMediaItem = (
+    mediaItem: MediaItem,
+    index: number,
+    isMyMessage: boolean
+  ) => {
+    if (!mediaItem.url) return null;
+
+    return (
+      <View key={index} style={styles.mediaItem}>
+        {mediaItem.type === "image" && (
+          <TouchableOpacity
+            onPress={() => {
+              console.log("Open image:", mediaItem.url);
+            }}
+          >
+            <Image
+              source={{ uri: mediaItem.url }}
+              style={styles.imageMedia}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        )}
+
+        {mediaItem.type === "audio" && (
+          <AudioPlayer
+            src={mediaItem.url}
+            duration={mediaItem.duration}
+            fileName={mediaItem.fileName}
+            isMyMessage={isMyMessage}
+          />
+        )}
+
+        {mediaItem.type === "video" && (
+          <TouchableOpacity
+            style={styles.videoContainer}
+            onPress={() => {
+              console.log("Open video:", mediaItem.url);
+            }}
+          >
+            <Text style={styles.videoIcon}>🎬</Text>
+            <Text style={styles.videoText}>Video</Text>
+          </TouchableOpacity>
+        )}
+
+        {mediaItem.type === "file" && (
+          <TouchableOpacity
+            style={[
+              styles.fileContainer,
+              isMyMessage ? styles.fileMyMessage : styles.fileOtherMessage,
+            ]}
+            onPress={() => {
+              console.log("Download file:", mediaItem.url);
+            }}
+          >
+            <Text style={styles.fileIcon}>📄</Text>
+            <View style={styles.fileInfo}>
+              <Text
+                style={styles.fileName}
+                numberOfLines={1}
+                ellipsizeMode="middle"
+              >
+                {mediaItem.fileName || "File"}
+              </Text>
+              {mediaItem.fileSize && (
+                <Text style={styles.fileSize}>
+                  {(mediaItem.fileSize / 1024).toFixed(0)} KB
+                </Text>
+              )}
+            </View>
+            <Text style={styles.downloadText}>↓</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
   const renderMessage = ({ item }: { item: Message }) => {
     const isMyMessage = currentUserId === item.senderId;
     const hasMedia = item.media && item.media.length > 0;
     const hasText = item.text && item.text.trim().length > 0;
+    const displayName = item.senderNickName || item.senderName;
 
-    const isDefaultAvatar = item.senderImageUrl?.includes("ui-avatars.com");
-    const shouldShowImage = item.senderImageUrl && !isDefaultAvatar;
+    const renderTextBubble = () => {
+      if (!hasText) return null;
+      return (
+        <View
+          style={[
+            styles.messageBubble,
+            isMyMessage ? styles.myMessageBubble : styles.otherMessageBubble,
+          ]}
+        >
+          <Text
+            style={[
+              styles.messageText,
+              isMyMessage ? styles.myMessageText : styles.otherMessageText,
+            ]}
+          >
+            {item.text}
+          </Text>
+        </View>
+      );
+    };
 
-    return (
-      <View
-        style={[
-          styles.messageContainer,
-          isMyMessage
-            ? styles.myMessageContainer
-            : styles.otherMessageContainer,
-        ]}
-      >
-        {!isMyMessage ? (
+    const renderMediaContainer = () => {
+      if (!hasMedia) return null;
+      return (
+        <View style={styles.mediaContainer}>
+          {item.media.map((mediaItem, index) =>
+            renderMediaItem(mediaItem, index, isMyMessage)
+          )}
+        </View>
+      );
+    };
+
+    if (!isMyMessage) {
+      return (
+        <View style={[styles.messageContainer, styles.otherMessageContainer]}>
           <View style={styles.messageWithProfileContainer}>
-            {/* Profile Image */}
-            {shouldShowImage ? (
-              <Image
-                source={{ uri: item.senderImageUrl }}
-                style={styles.profileImage}
-              />
-            ) : (
-              <View style={styles.profileImagePlaceholder}>
-                <UserIcon size={28} color="#000000" />
-              </View>
-            )}
+            {renderProfileAvatar(item.senderImageUrl)}
 
-            {/* Message Content */}
-            <View style={styles.messageContentContainer} id="messageContainer">
-              {/* Sender Name */}
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-              >
-                <Text style={styles.senderName}>
-                  {item.senderNickName || item.senderName}
-                </Text>
+            <View style={styles.messageContentContainer}>
+              <View style={styles.senderNameContainer}>
+                <Text style={styles.senderName}>{displayName}</Text>
                 <TouchableOpacity onPress={() => handleTTSPress(item)}>
                   <Volume2
                     size={24}
@@ -314,115 +413,8 @@ export default function ChatRoomScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Render Media Items */}
-              {hasMedia && (
-                <View style={styles.mediaContainer}>
-                  {item.media.map((mediaItem, index) => {
-                    if (!mediaItem.url) return null;
-
-                    return (
-                      <View key={index} style={styles.mediaItem}>
-                        {/* Image */}
-                        {mediaItem.type === "image" && (
-                          <TouchableOpacity
-                            onPress={() => {
-                              // TODO: Add image lightbox/modal viewer
-                              console.log("Open image:", mediaItem.url);
-                            }}
-                          >
-                            <Image
-                              source={{ uri: mediaItem.url }}
-                              style={styles.imageMedia}
-                              resizeMode="cover"
-                            />
-                          </TouchableOpacity>
-                        )}
-
-                        {/* Audio */}
-                        {mediaItem.type === "audio" && (
-                          <AudioPlayer
-                            src={mediaItem.url}
-                            duration={mediaItem.duration}
-                            fileName={mediaItem.fileName}
-                            isMyMessage={isMyMessage}
-                          />
-                        )}
-
-                        {/* Video */}
-                        {mediaItem.type === "video" && (
-                          <TouchableOpacity
-                            style={styles.videoContainer}
-                            onPress={() => {
-                              // TODO: Open video player
-                              console.log("Open video:", mediaItem.url);
-                            }}
-                          >
-                            <Text style={styles.videoIcon}>🎬</Text>
-                            <Text style={styles.videoText}>Video</Text>
-                          </TouchableOpacity>
-                        )}
-
-                        {/* File */}
-                        {mediaItem.type === "file" && (
-                          <TouchableOpacity
-                            style={[
-                              styles.fileContainer,
-                              isMyMessage
-                                ? styles.fileMyMessage
-                                : styles.fileOtherMessage,
-                            ]}
-                            onPress={() => {
-                              // TODO: Implement file download
-                              console.log("Download file:", mediaItem.url);
-                            }}
-                          >
-                            <Text style={styles.fileIcon}>📄</Text>
-                            <View style={styles.fileInfo}>
-                              <Text
-                                style={styles.fileName}
-                                numberOfLines={1}
-                                ellipsizeMode="middle"
-                              >
-                                {mediaItem.fileName || "File"}
-                              </Text>
-                              {mediaItem.fileSize && (
-                                <Text style={styles.fileSize}>
-                                  {(mediaItem.fileSize / 1024).toFixed(0)} KB
-                                </Text>
-                              )}
-                            </View>
-                            <Text style={styles.downloadText}>↓</Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-
-              {/* Render Text */}
-              {hasText && (
-                <View
-                  style={[
-                    styles.messageBubble,
-                    isMyMessage
-                      ? styles.myMessageBubble
-                      : styles.otherMessageBubble,
-                  ]}
-                  id="messageBubble"
-                >
-                  <Text
-                    style={[
-                      styles.messageText,
-                      isMyMessage
-                        ? styles.myMessageText
-                        : styles.otherMessageText,
-                    ]}
-                  >
-                    {item.text}
-                  </Text>
-                </View>
-              )}
+              {renderMediaContainer()}
+              {renderTextBubble()}
 
               <View style={styles.messageFooter}>
                 <Text style={styles.messageTime}>
@@ -431,125 +423,19 @@ export default function ChatRoomScreen() {
               </View>
             </View>
           </View>
-        ) : (
-          <>
-            {/* Render Media Items for my messages */}
-            {hasMedia && (
-              <View style={styles.mediaContainer}>
-                {item.media.map((mediaItem, index) => {
-                  if (!mediaItem.url) return null;
+        </View>
+      );
+    }
 
-                  return (
-                    <View key={index} style={styles.mediaItem}>
-                      {/* Image */}
-                      {mediaItem.type === "image" && (
-                        <TouchableOpacity
-                          onPress={() => {
-                            // TODO: Add image lightbox/modal viewer
-                            console.log("Open image:", mediaItem.url);
-                          }}
-                        >
-                          <Image
-                            source={{ uri: mediaItem.url }}
-                            style={styles.imageMedia}
-                            resizeMode="cover"
-                          />
-                        </TouchableOpacity>
-                      )}
+    return (
+      <View style={[styles.messageContainer, styles.myMessageContainer]}>
+        {renderMediaContainer()}
+        {renderTextBubble()}
 
-                      {/* Audio */}
-                      {mediaItem.type === "audio" && (
-                        <AudioPlayer
-                          src={mediaItem.url}
-                          duration={mediaItem.duration}
-                          fileName={mediaItem.fileName}
-                          isMyMessage={isMyMessage}
-                        />
-                      )}
-
-                      {/* Video */}
-                      {mediaItem.type === "video" && (
-                        <TouchableOpacity
-                          style={styles.videoContainer}
-                          onPress={() => {
-                            // TODO: Open video player
-                            console.log("Open video:", mediaItem.url);
-                          }}
-                        >
-                          <Text style={styles.videoIcon}>🎬</Text>
-                          <Text style={styles.videoText}>Video</Text>
-                        </TouchableOpacity>
-                      )}
-
-                      {/* File */}
-                      {mediaItem.type === "file" && (
-                        <TouchableOpacity
-                          style={[
-                            styles.fileContainer,
-                            isMyMessage
-                              ? styles.fileMyMessage
-                              : styles.fileOtherMessage,
-                          ]}
-                          onPress={() => {
-                            // TODO: Implement file download
-                            console.log("Download file:", mediaItem.url);
-                          }}
-                        >
-                          <Text style={styles.fileIcon}>📄</Text>
-                          <View style={styles.fileInfo}>
-                            <Text
-                              style={styles.fileName}
-                              numberOfLines={1}
-                              ellipsizeMode="middle"
-                            >
-                              {mediaItem.fileName || "File"}
-                            </Text>
-                            {mediaItem.fileSize && (
-                              <Text style={styles.fileSize}>
-                                {(mediaItem.fileSize / 1024).toFixed(0)} KB
-                              </Text>
-                            )}
-                          </View>
-                          <Text style={styles.downloadText}>↓</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
-            )}
-
-            {/* Render Text for my messages */}
-            {hasText && (
-              <View
-                style={[
-                  styles.messageBubble,
-                  isMyMessage
-                    ? styles.myMessageBubble
-                    : styles.otherMessageBubble,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.messageText,
-                    isMyMessage
-                      ? styles.myMessageText
-                      : styles.otherMessageText,
-                  ]}
-                >
-                  {item.text}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.messageFooter}>
-              <Text>{isMyMessage && readStatus(item)}</Text>
-              <Text style={styles.messageTime}>
-                {formatTime(item.createdAt)}
-              </Text>
-            </View>
-          </>
-        )}
+        <View style={styles.messageFooter}>
+          <Text>{readStatus(item)}</Text>
+          <Text style={styles.messageTime}>{formatTime(item.createdAt)}</Text>
+        </View>
       </View>
     );
   };
@@ -661,26 +547,26 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: PROFILE_IMAGE_SIZE,
+    height: PROFILE_IMAGE_SIZE,
+    borderRadius: PROFILE_IMAGE_SIZE / 2,
   },
   profileImagePlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: PROFILE_IMAGE_SIZE,
+    height: PROFILE_IMAGE_SIZE,
+    borderRadius: PROFILE_IMAGE_SIZE / 2,
     backgroundColor: "rgba(0, 0, 0, 0.04)",
     justifyContent: "center",
     alignItems: "center",
   },
-  profileImagePlaceholderText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
   messageContentContainer: {
     width: "100%",
     flex: 1,
+  },
+  senderNameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   senderName: {
     fontSize: 20,
@@ -729,10 +615,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6B7280",
   },
-  readBy: {
-    fontSize: 12,
-    color: Colors.primary,
-  },
   readByContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -771,31 +653,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  sendButtonDisabled: {
-    opacity: 0.4,
-  },
-  sendButtonIcon: {
-    width: 30,
-    height: 30,
-  },
-  // Media styles
   mediaContainer: {
     gap: 8,
     marginBottom: 8,
   },
   mediaItem: {
-    maxWidth: 300,
+    maxWidth: MEDIA_MAX_WIDTH,
     borderRadius: 12,
     overflow: "hidden",
   },
-  // Image styles
   imageMedia: {
-    width: 300,
-    height: 200,
+    width: MEDIA_MAX_WIDTH,
+    height: MEDIA_IMAGE_HEIGHT,
     borderRadius: 12,
   },
-  // Audio styles - MOVED TO AudioPlayer component
-  // Video styles
   videoContainer: {
     backgroundColor: "#F3F4F6",
     padding: 24,
@@ -810,7 +681,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#374151",
   },
-  // File styles
   fileContainer: {
     flexDirection: "row",
     alignItems: "center",
