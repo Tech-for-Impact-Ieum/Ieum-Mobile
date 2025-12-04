@@ -105,11 +105,26 @@ export default function ChatRoomScreen() {
     const loadMessages = async () => {
       try {
         const data = await chatApi.getMessages(roomId, currentUserId);
-        if (data.ok && data.messages) {
-          setMessages(data.messages);
+        if (data.ok && data.messages && Array.isArray(data.messages)) {
+          // Filter out any non-object items (e.g., strings from logs)
+          const validMessages = data.messages.filter(
+            (msg: any) => msg && typeof msg === 'object' && msg.id
+          );
+          setMessages(validMessages);
+          // Mark messages as read immediately after loading
+          if (validMessages.length > 0) {
+            const lastMessage = validMessages[validMessages.length - 1];
+            const numericRoomId =
+              typeof roomId === "string" ? parseInt(roomId, 10) : roomId;
+            markMessagesAsRead(numericRoomId, lastMessage.id);
+          }
         }
       } catch (error) {
         console.error("Error loading messages:", error);
+        // Show user-friendly error instead of crashing
+        if (error instanceof Error) {
+          console.error("Error details:", error.message);
+        }
       }
     };
 
@@ -125,6 +140,11 @@ export default function ChatRoomScreen() {
         if (prev.some((msg) => msg.id === message.id)) return prev;
         return [...prev, message];
       });
+
+      // Mark new message as read immediately since user is in the chat room
+      const numericRoomId =
+        typeof roomId === "string" ? parseInt(roomId, 10) : roomId;
+      markMessagesAsRead(numericRoomId, message.id);
     },
     [roomId, currentUserId]
   );
@@ -275,6 +295,7 @@ export default function ChatRoomScreen() {
   const renderProfileAvatar = (imageUrl?: string) => {
     const isDefaultAvatar = imageUrl?.includes("ui-avatars.com");
     const hasCustomImage = imageUrl && !isDefaultAvatar;
+    console.log("Rendering profile avatar, hasCustomImage:", imageUrl);
 
     if (hasCustomImage) {
       return <Image source={{ uri: imageUrl }} style={styles.profileImage} />;

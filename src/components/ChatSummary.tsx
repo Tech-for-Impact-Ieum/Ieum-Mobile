@@ -34,8 +34,8 @@ export function ChatSummary({
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Use expo-audio hooks
-  const player = useAudioPlayer(summary?.audioUrl || "");
+  // Use expo-audio hooks - only initialize when we have a valid audio URL
+  const player = useAudioPlayer(summary?.audioUrl || null);
   const status = useAudioPlayerStatus(player);
 
   useEffect(() => {
@@ -53,10 +53,7 @@ export function ChatSummary({
 
       if (data.ok && data.summary) {
         setSummary(data.summary);
-        // Update player source if summary loaded
-        if (data.summary.audioUrl) {
-          player.replace(data.summary.audioUrl);
-        }
+        // Player will automatically reinitialize with new audioUrl via state change
       }
 
       onSummaryComplete();
@@ -66,7 +63,7 @@ export function ChatSummary({
         await generateSummary();
       } else {
         console.error("Failed to load summary:", err);
-        setError(err.message || "요약을 불러오는데 실패했습니다.");
+        // Don't show error to user - silently continue
         onSummaryComplete();
       }
     } finally {
@@ -83,15 +80,28 @@ export function ChatSummary({
 
       if (data.ok && data.summary) {
         setSummary(data.summary);
-        if (data.summary.audioUrl) {
-          player.replace(data.summary.audioUrl);
-        }
+        // Player will automatically reinitialize with new audioUrl via state change
       }
 
       onSummaryComplete();
     } catch (err: any) {
       console.error("Failed to generate summary:", err);
-      setError(err.message || "요약 생성에 실패했습니다.");
+      // Check if it's a TTS audio generation failure
+      if (err.message?.includes("TTS audio")) {
+        console.warn(
+          "TTS audio generation failed, but summary may still be available"
+        );
+        // Try to load summary again in case text was generated without audio
+        try {
+          const data = await chatApi.getSummary(roomId);
+          if (data.ok && data.summary) {
+            setSummary(data.summary);
+          }
+        } catch (retryErr) {
+          console.error("Retry failed:", retryErr);
+        }
+      }
+      // Don't show error to user - silently continue
       onSummaryComplete();
     } finally {
       setIsGenerating(false);
