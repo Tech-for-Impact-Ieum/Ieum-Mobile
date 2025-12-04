@@ -65,6 +65,7 @@ export default function ChatRoomScreen() {
   const [showEmojiModal, setShowEmojiModal] = useState(false);
   const [showQuickResponseModal, setShowQuickResponseModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const hasMarkedInitialMessagesAsRead = useRef(false);
 
   // Set navigation title
   useEffect(() => {
@@ -102,6 +103,9 @@ export default function ChatRoomScreen() {
   useEffect(() => {
     if (!currentUserId) return;
 
+    // Reset the flag when entering a new room
+    hasMarkedInitialMessagesAsRead.current = false;
+
     const loadMessages = async () => {
       try {
         const data = await chatApi.getMessages(roomId, currentUserId);
@@ -111,13 +115,6 @@ export default function ChatRoomScreen() {
             (msg: any) => msg && typeof msg === 'object' && msg.id
           );
           setMessages(validMessages);
-          // Mark messages as read immediately after loading
-          if (validMessages.length > 0) {
-            const lastMessage = validMessages[validMessages.length - 1];
-            const numericRoomId =
-              typeof roomId === "string" ? parseInt(roomId, 10) : roomId;
-            markMessagesAsRead(numericRoomId, lastMessage.id);
-          }
         }
       } catch (error) {
         console.error("Error loading messages:", error);
@@ -130,6 +127,40 @@ export default function ChatRoomScreen() {
 
     loadMessages();
   }, [roomId, currentUserId]);
+
+  // Scroll to bottom and mark messages as read after they are loaded (only once on initial load)
+  useEffect(() => {
+    if (messages.length > 0 && currentUserId && !hasMarkedInitialMessagesAsRead.current) {
+      setTimeout(() => {
+        // For long histories, jump to near the end instantly, then animate the final bit
+        if (messages.length > 20) {
+          // Jump to near the end without animation
+          flatListRef.current?.scrollToIndex({
+            index: messages.length - 5,
+            animated: false,
+          });
+          // Then animate the last few messages for a quick scroll effect
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 50);
+        } else {
+          // For short histories, just animate normally
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }
+      }, 100);
+
+      // Then mark messages as read after scroll animation completes
+      const timer = setTimeout(() => {
+        const lastMessage = messages[messages.length - 1];
+        const numericRoomId =
+          typeof roomId === "string" ? parseInt(roomId, 10) : roomId;
+        markMessagesAsRead(numericRoomId, lastMessage.id);
+        hasMarkedInitialMessagesAsRead.current = true;
+      }, 400);
+
+      return () => clearTimeout(timer);
+    }
+  }, [messages.length, roomId, currentUserId]);
 
   const handleNewMessageEvent = useCallback(
     (message: Message) => {
@@ -492,6 +523,12 @@ export default function ChatRoomScreen() {
         onContentSizeChange={() =>
           flatListRef.current?.scrollToEnd({ animated: true })
         }
+        onLayout={() => {
+          // Scroll to end when FlatList layout is ready with smooth animation
+          if (messages.length > 0) {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }
+        }}
       />
 
       {/* Action Buttons */}
