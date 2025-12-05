@@ -52,6 +52,10 @@
 
 - 기존 채팅 서비스는 '안 읽은 메세지'를 대상으로 꼼꼼한 요약을 제공하는 반면, 이음에서는 채팅방의 전반적인 메세지를 대상으로 간결한 요약을 제공합니다. 이로 인해 요약의 디테일이 부족할 수는 있으나, 1-2 문장으로 간결한 요약을 통해서 발달장애청년이 쉽고 빠르게 내용을 인지할 수 있도록 보조합니다.
 
+**텍스트 읽어주기**
+- 주요 텍스트를 음성으로 읽어줍니다. 유저 테스팅에서 발달장애청년들이 텍스트를 읽는 데 어려움을 겪는다는 피드백을 반영하여, 상대방이 보내온 메세지와 대화의 요약본을 TTS로 들을 수 있게 하였습니다. 이를 통해 발달장애청년은 채팅 내용을 보다 쉽게 이해할 수 있습니다.
+
+
 ## 기대 효과
 
 ### 영향
@@ -176,7 +180,6 @@ Ieum-Mobile/
 │   ├── utils/           # Utility functions
 │   ├── assets/          # Images, fonts, etc.
 │   └── constants/       # Constants
-
 ├── App.tsx              # Main app entry point
 ├── package.json
 └── .env                 # Environment variables (create from .env.example)
