@@ -204,6 +204,10 @@ For backend:
 - **API Server**: REST API for data operations (default: port 4000)
 - **Socket.io Server**: WebSocket for real-time messaging (default: port 4001)
 
+For AI & Cloud Services:
+- **OpenAI API**: GPT-4o chat summarization and TTS
+- **AWS S3**: Media storage and hosting
+
 ## 관련 프로젝트
 
 - **Web-based frontend (version `0.0.1`)**: https://github.com/Tech-for-Impact-Ieum/Ieum
